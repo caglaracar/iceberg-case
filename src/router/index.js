@@ -16,7 +16,12 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          redirect: '/appointments'
+          redirect: '/home'
+        },
+        {
+          path: '/home',
+          name: 'dashboard',
+          component: () => import('@/pages/home/HomeView.vue')
         },
         {
           path: '/appointments',
