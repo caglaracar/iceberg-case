@@ -1,19 +1,48 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, type Ref } from 'vue'
 import { mockAppointments, mockAgents, simulateApiResponse } from '@/data/mockData'
 import DOMPurify from 'dompurify'
 import dayjs from 'dayjs'
+import type { Agent, Appointment } from '@/types/api'
+
+interface FetchOptions {
+  page?: number
+  limit?: number
+  filters?: {
+    search?: string
+    status?: string
+    agents?: string[]
+    dateRange?: {
+      start?: string
+      end?: string
+    }
+  }
+  sort?: {
+    field: string
+    order: number
+  }
+}
+
+interface CreateAppointmentData {
+  customerName: string
+  email: string
+  phone: string
+  address: string
+  date: string
+  time: string
+  agents?: Agent[]
+}
 
 export const useAppointmentStore = defineStore('appointments', () => {
-  const appointments = ref([])
-  const agents = ref(mockAgents)
-  const isLoading = ref(false)
-  const error = ref(null)
+  const appointments: Ref<Appointment[]> = ref([])
+  const agents: Ref<Agent[]> = ref(mockAgents)
+  const isLoading: Ref<boolean> = ref(false)
+  const error: Ref<string | null> = ref(null)
   
   // Pagination
-  const currentPage = ref(1)
-  const pageSize = ref(10)
-  const totalCount = ref(0)
+  const currentPage: Ref<number> = ref(1)
+  const pageSize: Ref<number> = ref(10)
+  const totalCount: Ref<number> = ref(0)
   
   // Computed
   const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value))
@@ -21,7 +50,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
   const hasPreviousPage = computed(() => currentPage.value > 1)
 
   // Fetch appointments with filters, pagination, and sorting
-  const fetchAppointments = async (options = {}) => {
+  const fetchAppointments = async (options: FetchOptions = {}): Promise<Appointment[]> => {
     try {
       isLoading.value = true
       error.value = null
@@ -107,7 +136,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
       currentPage.value = page
       
       return paginatedAppointments
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to fetch appointments'
       throw err
     } finally {
@@ -116,7 +145,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
   }
 
   // Create new appointment
-  const createAppointment = async (appointmentData) => {
+  const createAppointment = async (appointmentData: CreateAppointmentData): Promise<Appointment> => {
     try {
       isLoading.value = true
       error.value = null
@@ -145,7 +174,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
       mockAppointments.unshift(response.data)
       
       return response.data
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to create appointment'
       throw err
     } finally {
@@ -154,7 +183,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
   }
 
   // Update appointment status
-  const updateAppointmentStatus = async (appointmentId, newStatus) => {
+  const updateAppointmentStatus = async (appointmentId: string, newStatus: string): Promise<void> => {
     try {
       isLoading.value = true
       
@@ -174,7 +203,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
       
       await simulateApiResponse({ success: true })
       
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to update appointment'
       throw err
     } finally {
@@ -183,7 +212,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
   }
 
   // Delete appointment
-  const deleteAppointment = async (appointmentId) => {
+  const deleteAppointment = async (appointmentId: string): Promise<void> => {
     try {
       isLoading.value = true
       
@@ -203,7 +232,7 @@ export const useAppointmentStore = defineStore('appointments', () => {
       
       await simulateApiResponse({ success: true })
       
-    } catch (err) {
+    } catch (err: any) {
       error.value = err.message || 'Failed to delete appointment'
       throw err
     } finally {

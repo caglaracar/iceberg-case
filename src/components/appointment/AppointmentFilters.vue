@@ -94,10 +94,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import dayjs from 'dayjs'
-import { mockAgents, appointmentStatuses } from '@/data/mockData'
+import { useAgents } from '@/composables/useAgents'
 
 const props = defineProps({
   filters: {
@@ -112,6 +112,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:filters', 'apply-filters'])
+
+// Use agents composable
+const { agents: availableAgents, fetchAgents } = useAgents()
 
 // Local reactive copy of filters
 const localFilters = ref({
@@ -139,13 +142,22 @@ watch(() => props.filters, (newFilters) => {
 // Available options
 const statusOptions = ref([
   { label: 'All Statuses', value: null },
-  ...appointmentStatuses.map(status => ({
-    label: status.label,
-    value: status.value
-  }))
+  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'Confirmed', value: 'confirmed' },
+  { label: 'In Progress', value: 'in_progress' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' }
 ])
 
-const agents = ref(mockAgents)
+// Transform agents for display
+const agents = computed(() => {
+  return availableAgents.value.map(agent => ({
+    id: agent.id,
+    name: agent.name,
+    initials: agent.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase(),
+    color: '#6366f1' // Default color since we don't have colors from Airtable
+  }))
+})
 
 // Computed properties
 const activeFiltersCount = computed(() => {
@@ -205,6 +217,15 @@ const clearFilters = () => {
 
 // Debounced search
 const debouncedApplyFilters = useDebounceFn(applyFilters, 300)
+
+// Load agents on mount
+onMounted(async () => {
+  try {
+    await fetchAgents()
+  } catch (error) {
+    console.error('Failed to load agents:', error)
+  }
+})
 </script>
 
 <style scoped>
