@@ -5,8 +5,8 @@
       <p class="text-gray-600">Enter your email address and we'll send you a verification code.</p>
     </div>
 
-    <a-form @finish="handleForgotPassword" layout="vertical" class="space-y-6">
-      <a-form-item>
+    <form @submit.prevent="handleForgotPassword" class="space-y-6">
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
         <a-input
           v-model:value="form.email"
@@ -17,21 +17,20 @@
           class="rounded-lg"
         />
         <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
-      </a-form-item>
+      </div>
 
-      <a-form-item>
-        <a-button
-          type="primary"
-          html-type="submit"
-          size="large"
-          block
-          :loading="isLoading"
-          class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
-        >
-          Send Verification Code
-        </a-button>
-      </a-form-item>
-    </a-form>
+      <a-button
+        type="primary"
+        html-type="submit"
+        size="large"
+        block
+        :loading="isLoading"
+        class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
+        @click="handleForgotPassword"
+      >
+        Send Verification Code
+      </a-button>
+    </form>
 
     <div class="mt-6 text-center">
       <a 
@@ -75,6 +74,8 @@ const props = defineProps({
   }
 })
 
+
+console.log("xx")
 const emit = defineEmits(['forgot-password', 'back-to-signin'])
 
 const form = ref({

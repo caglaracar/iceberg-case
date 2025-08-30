@@ -1,29 +1,27 @@
 <template>
-  <a-form @finish="handleLogin" layout="vertical" class="space-y-4">
-    <a-form-item 
-      label="Email Address"
-      :validate-status="errors.email ? 'error' : ''"
-      :help="errors.email"
-    >
+  <form @submit.prevent="handleLogin" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
       <a-input
         v-model:value="form.email"
         type="email"
         placeholder="Enter your email"
         size="large"
+        :status="errors.email ? 'error' : ''"
       />
-    </a-form-item>
+      <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
+    </div>
 
-    <a-form-item 
-      label="Password"
-      :validate-status="errors.password ? 'error' : ''"
-      :help="errors.password"
-    >
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
       <a-input-password
         v-model:value="form.password"
         placeholder="Enter your password"
         size="large"
+        :status="errors.password ? 'error' : ''"
       />
-    </a-form-item>
+      <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
+    </div>
 
     <div class="flex items-center justify-between mb-4">
       <a-checkbox v-model:checked="form.rememberMe">
@@ -34,19 +32,18 @@
       </a>
     </div>
 
-    <a-form-item>
-      <a-button
-        type="primary"
-        html-type="submit"
-        size="large"
-        block
-        :loading="isLoading"
-        class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
-      >
-        Sign In
-      </a-button>
-    </a-form-item>
-  </a-form>
+    <a-button
+      type="primary"
+      html-type="submit"
+      size="large"
+      block
+      :loading="isLoading"
+      class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
+      @click="handleLogin"
+    >
+      Sign In
+    </a-button>
+  </form>
 </template>
 
 <script setup>

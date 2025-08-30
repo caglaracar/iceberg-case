@@ -5,7 +5,7 @@
       <p class="text-gray-600">You can sign in with your registered e-mail and password.</p>
     </div>
 
-    <a-form @finish="handleSignIn" layout="vertical" class="space-y-6">
+    <form @submit.prevent="handleSignIn" class="space-y-6">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
         <a-input
@@ -51,10 +51,11 @@
         block
         :loading="isLoading"
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
+        @click="handleSignIn"
       >
         Sign In
       </a-button>
-    </a-form>
+    </form>
 
     <div class="mt-6 text-center">
       <span class="text-gray-500">or</span>

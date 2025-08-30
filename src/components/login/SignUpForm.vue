@@ -5,7 +5,7 @@
       <p class="text-gray-600">Create your account to get started with our platform.</p>
     </div>
 
-    <a-form @finish="handleSignUp" layout="vertical" class="space-y-6">
+    <form @submit.prevent="handleSignUp" class="space-y-6">
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
@@ -86,10 +86,11 @@
         block
         :loading="isLoading"
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
+        @click="handleSignUp"
       >
         Create Account
       </a-button>
-    </a-form>
+    </form>
 
     <div class="mt-6 text-center">
       <span class="text-gray-600">Already have an account? </span>

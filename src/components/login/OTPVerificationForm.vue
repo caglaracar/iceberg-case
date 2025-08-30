@@ -5,7 +5,7 @@
       <p class="text-gray-600">We've sent a 6-digit verification code to <strong>{{ email }}</strong></p>
     </div>
 
-    <a-form @finish="handleOTPVerification" layout="vertical" class="space-y-6">
+    <form @submit.prevent="handleOTPVerification" class="space-y-6">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-4">Verification Code</label>
         <div class="flex gap-3 justify-center">
@@ -44,10 +44,11 @@
         block
         :loading="isLoading"
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
+        @click="handleOTPVerification"
       >
         Verify Code
       </a-button>
-    </a-form>
+    </form>
 
     <div class="mt-6 text-center">
       <a 
