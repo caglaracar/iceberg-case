@@ -13,9 +13,9 @@
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'customer'">
           <div class="flex flex-col">
-            <span class="font-medium text-gray-900">{{ record.customerName }}</span>
-            <span class="text-sm text-gray-500">{{ record.email }}</span>
-            <span class="text-sm text-gray-400">{{ record.phone }}</span>
+            <span class="font-medium text-gray-900">{{ record.customer }}</span>
+            <span class="text-sm text-gray-500">{{ record.contactEmail }}</span>
+            <span class="text-sm text-gray-400">{{ record.contactPhone }}</span>
           </div>
         </template>
 
@@ -39,15 +39,16 @@
         </template>
 
         <template v-else-if="column.key === 'agents'">
-          <a-avatar-group :max-count="3" :size="32">
+          <div v-if="record.agent">
             <a-avatar
-              v-for="agent in record.agents"
-              :key="agent.id"
-              :style="{ backgroundColor: agent.color, color: 'white' }"
+              :style="{ backgroundColor: '#6366f1', color: 'white' }"
+              size="small"
             >
-              {{ agent.initials }}
+              {{ getAgentInitials(record.agent) }}
             </a-avatar>
-          </a-avatar-group>
+            <span class="ml-2 text-sm text-gray-700">{{ record.agent }}</span>
+          </div>
+          <span v-else class="text-sm text-gray-400">No agent assigned</span>
         </template>
 
         <template v-else-if="column.key === 'actions'">
@@ -91,7 +92,6 @@
 import { computed } from 'vue'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import { appointmentStatuses } from '@/data/mockData'
 
 const props = defineProps({
   appointments: {
@@ -159,16 +159,20 @@ const paginationConfig = computed(() => ({
   showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
 }))
 
-const statusMap = computed(() => {
-  const map = {}
-  appointmentStatuses.forEach(status => {
-    map[status.value] = status
-  })
-  return map
-})
-
 const getStatusLabel = (status) => {
-  return statusMap.value[status]?.label || status
+  const statusLabels = {
+    upcoming: 'Upcoming',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    confirmed: 'Confirmed',
+    in_progress: 'In Progress'
+  }
+  return statusLabels[status] || status
+}
+
+const getAgentInitials = (agentName) => {
+  if (!agentName) return ''
+  return agentName.split(' ').map(name => name.charAt(0)).join('').toUpperCase()
 }
 
 const getStatusColor = (status) => {

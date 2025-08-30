@@ -106,29 +106,30 @@
         </div>
 
         <!-- Agent Selection -->
-        <a-form-item label="Assign Agents">
-          <div class="flex flex-wrap gap-2">
-            <div
+        <a-form-item label="Assign Agent">
+          <a-select
+            v-model:value="form.agent"
+            placeholder="Select an agent"
+            class="w-full"
+            allow-clear
+          >
+            <a-select-option
               v-for="agent in availableAgents"
               :key="agent.id"
-              :class="[
-                'flex items-center gap-2 px-3 py-2 rounded-full text-sm cursor-pointer transition-all',
-                isAgentSelected(agent.id) 
-                  ? 'bg-pink-100 text-pink-800 ring-1 ring-pink-300' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]"
-              @click="toggleAgent(agent.id)"
+              :value="agent.name"
             >
-              <a-avatar
-                :style="{ backgroundColor: agent.color, color: 'white' }"
-                size="small"
-              >
-                {{ agent.initials }}
-              </a-avatar>
-              <span>{{ agent.name }}</span>
-            </div>
-          </div>
-          <div class="text-sm text-gray-500 mt-1">Select one or more agents for this appointment</div>
+              <div class="flex items-center gap-2">
+                <a-avatar
+                  :style="{ backgroundColor: '#6366f1', color: 'white' }"
+                  size="small"
+                >
+                  {{ getAgentInitials(agent.name) }}
+                </a-avatar>
+                <span>{{ agent.name }}</span>
+              </div>
+            </a-select-option>
+          </a-select>
+          <div class="text-sm text-gray-500 mt-1">Select an agent for this appointment</div>
         </a-form-item>
       </div>
 
@@ -155,9 +156,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useAppointmentStore } from '@/stores/appointments'
-import { mockAgents } from '@/data/mockData'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useAppointments } from '@/composables/useAppointments'
+import { useAgents } from '@/composables/useAgents'
 import dayjs from 'dayjs'
 
 const props = defineProps({
@@ -169,8 +170,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'appointment-created'])
 
-const appointmentStore = useAppointmentStore()
-const availableAgents = ref(mockAgents)
+// Use composables for API integration
+const { createAppointment } = useAppointments()
+const { agents: availableAgents, fetchAgents } = useAgents()
 const isSubmitting = ref(false)
 
 // Form data
@@ -181,7 +183,7 @@ const form = ref({
   address: '',
   date: null,
   time: null,
-  agents: []
+  agent: null
 })
 
 // Form validation errors
@@ -207,21 +209,12 @@ const isFormValid = computed(() => {
          Object.keys(errors.value).length === 0
 })
 
-// Methods
-const isAgentSelected = (agentId) => {
-  return form.value.agents.some(agent => agent.id === agentId)
+const getAgentInitials = (agentName) => {
+  if (!agentName) return ''
+  return agentName.split(' ').map(name => name.charAt(0)).join('').toUpperCase()
 }
 
-const toggleAgent = (agentId) => {
-  const agent = availableAgents.value.find(a => a.id === agentId)
-  const index = form.value.agents.findIndex(a => a.id === agentId)
-  
-  if (index > -1) {
-    form.value.agents.splice(index, 1)
-  } else {
-    form.value.agents.push(agent)
-  }
-}
+// Methods
 
 const validateForm = () => {
   const newErrors = {}
@@ -273,18 +266,19 @@ const handleSubmit = async () => {
     isSubmitting.value = true
 
     const appointmentData = {
-      customerName: form.value.customerName.trim(),
-      email: form.value.email.trim(),
-      phone: form.value.phone.trim(),
+      customer: form.value.customerName.trim(),
+      contactEmail: form.value.email.trim(),
+      contactPhone: form.value.phone.trim(),
       address: form.value.address.trim(),
       date: dayjs(form.value.date).format('YYYY-MM-DD'),
       time: form.value.time ? dayjs(form.value.time).format('HH:mm') : '',
-      agents: form.value.agents
+      agent: form.value.agent,
+      status: 'upcoming'
     }
 
-    await appointmentStore.createAppointment(appointmentData)
+    await createAppointment(appointmentData)
     
-    emit('appointment-created')
+    emit('appointment-created', appointmentData)
     resetForm()
     
   } catch (error) {
@@ -302,7 +296,7 @@ const resetForm = () => {
     address: '',
     date: null,
     time: null,
-    agents: []
+    agent: null
   }
   errors.value = {}
 }
@@ -317,6 +311,15 @@ watch(form, () => {
     validateForm()
   }
 }, { deep: true })
+
+// Load agents on mount
+onMounted(async () => {
+  try {
+    await fetchAgents()
+  } catch (error) {
+    console.error('Failed to load agents:', error)
+  }
+})
 </script>
 
 <style scoped>

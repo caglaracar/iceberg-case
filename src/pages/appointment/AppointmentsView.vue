@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Appointments</h1>
-        <p class="text-gray-600 mt-1">{{ appointmentStore.totalCount }} Appointments found.</p>
+        <p class="text-gray-600 mt-1">{{ totalAppointments }} Appointments found.</p>
       </div>
       <a-button 
         type="primary"
@@ -28,9 +28,9 @@
     <!-- Table -->
     <div class="bg-white rounded-lg shadow-sm">
       <AppointmentTable 
-        :appointments="appointmentStore.appointments"
-        :loading="appointmentStore.isLoading"
-        :total-records="appointmentStore.totalCount"
+        :appointments="appointments"
+        :loading="loading"
+        :total-records="totalAppointments"
         @page-change="handlePageChange"
         @sort-change="handleSortChange"
       />
@@ -45,14 +45,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
-import { useAppointmentStore } from '@/stores/appointments'
+import { useAppointments } from '@/composables/useAppointments'
 import AppointmentFilters from '@/components/appointment/AppointmentFilters.vue'
 import AppointmentTable from '@/components/appointment/AppointmentTable.vue'
 import CreateAppointmentModal from '@/components/appointment/CreateAppointmentModal.vue'
 
-const appointmentStore = useAppointmentStore()
+const { 
+  appointments, 
+  loading, 
+  error, 
+  totalAppointments,
+  fetchAppointments,
+  searchAppointments,
+  filterByStatus,
+  createAppointment 
+} = useAppointments()
+
 const showCreateModal = ref(false)
 
 const filters = ref({
@@ -67,40 +77,50 @@ const filters = ref({
 
 const handleFiltersChange = async (newFilters) => {
   filters.value = { ...newFilters }
-  await appointmentStore.fetchAppointments({ 
-    page: 1, 
-    filters: filters.value 
-  })
+  
+  try {
+    if (newFilters.search) {
+      await searchAppointments(newFilters.search)
+    } else if (newFilters.status) {
+      await filterByStatus(newFilters.status)
+    } else {
+      await fetchAppointments()
+    }
+  } catch (err) {
+    console.error('Filter error:', err)
+  }
 }
 
 const handlePageChange = async (event) => {
-  await appointmentStore.fetchAppointments({ 
-    page: event.page + 1,
-    filters: filters.value 
-  })
+  // Since Airtable pagination works differently, we'll load more records
+  // For now, just refetch - can be enhanced later with proper pagination
+  await fetchAppointments()
 }
 
 const handleSortChange = async (event) => {
-  await appointmentStore.fetchAppointments({
-    page: appointmentStore.currentPage,
-    filters: filters.value,
-    sort: {
-      field: event.sortField,
-      order: event.sortOrder
-    }
-  })
+  const sortConfig = [{
+    field: event.sortField === 'date' ? 'appointment_date' : event.sortField,
+    direction: event.sortOrder === 1 ? 'asc' : 'desc'
+  }]
+  
+  await fetchAppointments({ sort: JSON.stringify(sortConfig) })
 }
 
-const handleAppointmentCreated = async () => {
+const handleAppointmentCreated = async (appointmentData) => {
   showCreateModal.value = false
-  await appointmentStore.fetchAppointments({ 
-    page: 1, 
-    filters: filters.value 
-  })
+  try {
+    await createAppointment(appointmentData)
+  } catch (err) {
+    console.error('Create appointment error:', err)
+  }
 }
 
 onMounted(async () => {
-  await appointmentStore.fetchAppointments()
+  try {
+    await fetchAppointments()
+  } catch (err) {
+    console.error('Failed to load appointments:', err)
+  }
 })
 </script>
 
