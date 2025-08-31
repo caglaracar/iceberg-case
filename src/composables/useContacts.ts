@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import api from '@/services/api'
-import type { Contact } from '@/types/api'
-import type { AirtableRecord, ContactFields } from '@/types/airtable'
+import type { Contact } from '@/types/contact'
+import type { AirtableContactRecord } from '@/types/contact'
 
 export function useContacts() {
   const contacts: Ref<Contact[]> = ref([])
@@ -11,11 +11,11 @@ export function useContacts() {
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
 
   // Transform Airtable contact record
-  const transformContact = (record: AirtableRecord<ContactFields>): Contact => {
+  const transformContact = (record: AirtableContactRecord): Contact => {
     const fields = record.fields
     return {
       id: record.id,
-      contactId: fields.contact_id,
+      contactId: fields.contact_id || '',
       name: fields.contact_name || '',
       surname: fields.contact_surname || '',
       email: fields.contact_email || '',
@@ -29,24 +29,12 @@ export function useContacts() {
   }
 
   // Fetch all contacts
-  const fetchContacts = async (options: {pageSize?: number; filterByFormula?: string} = {}): Promise<Contact[]> => {
+  const fetchContacts = async (): Promise<Contact[]> => {
     loading.value = true
     error.value = null
 
     try {
-      const params: any = {
-        pageSize: options.pageSize || 100,
-        sort: JSON.stringify([{
-          field: 'contact_name',
-          direction: 'asc'
-        }])
-      }
-
-      if (options.filterByFormula) {
-        params.filterByFormula = options.filterByFormula
-      }
-
-      const response = await api.get(`/${baseId}/Contacts`, { params })
+      const response = await api.get(`/${baseId}/Contacts`)
       const transformedRecords = response.data.records.map(transformContact)
       
       contacts.value = transformedRecords
@@ -59,19 +47,19 @@ export function useContacts() {
     }
   }
 
-  // Search contacts
-  const searchContacts = async (searchTerm: string): Promise<Contact[]> => {
+  // Search contacts (client-side filtering)
+  const searchContacts = (searchTerm: string): Contact[] => {
     if (!searchTerm.trim()) {
-      return fetchContacts()
+      return contacts.value
     }
 
-    const formula = `OR(
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_name})),
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_surname})),
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_email}))
-    )`
-
-    return fetchContacts({ filterByFormula: formula })
+    const term = searchTerm.toLowerCase()
+    return contacts.value.filter(contact => 
+      contact.name.toLowerCase().includes(term) ||
+      contact.surname.toLowerCase().includes(term) ||
+      contact.email.toLowerCase().includes(term) ||
+      contact.fullName.toLowerCase().includes(term)
+    )
   }
 
   // Get contact by ID
@@ -90,6 +78,43 @@ export function useContacts() {
     }
   }
 
+  // Create new contact
+  const createContact = async (contactData: {
+    name: string
+    surname: string
+    email: string
+    phone: string
+  }): Promise<Contact> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const payload = {
+        records: [{
+          fields: {
+            contact_name: contactData.name,
+            contact_surname: contactData.surname,
+            contact_email: contactData.email,
+            contact_phone: contactData.phone
+          }
+        }]
+      }
+
+      const response = await api.post(`/${baseId}/Contacts`, payload)
+      const newContact = transformContact(response.data.records[0])
+      
+      // Add to local state
+      contacts.value.unshift(newContact)
+      
+      return newContact
+    } catch (err: any) {
+      error.value = err.message || 'Failed to create contact'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     contacts,
     loading,
@@ -97,6 +122,7 @@ export function useContacts() {
     fetchContacts,
     searchContacts,
     getContact,
+    createContact,
     totalContacts: computed(() => contacts.value.length)
   }
 }

@@ -1,25 +1,47 @@
 <template>
-  <div class="appointment-filters bg-white p-6 rounded-lg shadow-sm border">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Search Input -->
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-gray-700">Search</label>
-        <a-input
-          v-model:value="localFilters.search"
-          placeholder="Address, customer name, email or phone number..."
-          @input="debouncedApplyFilters"
-        />
+  <div class="appointment-filters bg-white p-4 rounded-lg shadow-sm border">
+    <!-- Compact horizontal layout -->
+    <div class="flex items-center gap-4 flex-wrap">
+      <!-- Agent Filter - Show max 5 + counter (First) -->
+      <div class="flex items-center gap-2">
+        <div
+          v-for="agent in visibleAgents"
+          :key="agent.id"
+          :class="[
+            'cursor-pointer transition-all',
+            isAgentSelected(agent.id) 
+              ? 'ring-2 ring-pink-300' 
+              : 'hover:ring-2 hover:ring-gray-300'
+          ]"
+          @click="toggleAgent(agent.id)"
+        >
+          <a-avatar
+            :style="{ backgroundColor: agent.color, color: 'white' }"
+            :size="32"
+          >
+            {{ agent.initials }}
+          </a-avatar>
+        </div>
+        
+        <!-- Show remaining count if there are more than 5 agents -->
+        <div
+          v-if="remainingAgentsCount > 0"
+          class="flex items-center justify-center w-8 h-8 rounded-full text-xs bg-gray-100 text-gray-600 cursor-pointer hover:bg-gray-200"
+          @click="showAllAgents = !showAllAgents"
+        >
+          +{{ remainingAgentsCount }}
+        </div>
       </div>
 
       <!-- Status Filter -->
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-gray-700">Status</label>
+      <div class="min-w-[140px]">
         <a-select
           v-model:value="localFilters.status"
           placeholder="All Statuses"
           class="w-full"
           @change="applyFilters"
           allow-clear
+          :dropdown-style="{ zIndex: 1050 }"
         >
           <a-select-option
             v-for="option in statusOptions"
@@ -31,102 +53,99 @@
         </a-select>
       </div>
 
-      <!-- Agent Filter -->
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-gray-700">Agents</label>
-        <div class="flex flex-wrap gap-2">
-          <div
-            v-for="agent in agents"
-            :key="agent.id"
-            :class="[
-              'flex items-center gap-2 px-3 py-2 rounded-full text-sm cursor-pointer transition-all',
-              isAgentSelected(agent.id) 
-                ? 'bg-pink-100 text-pink-800 ring-1 ring-pink-300' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            ]"
-            @click="toggleAgent(agent.id)"
-          >
-            <a-avatar
-              :style="{ backgroundColor: agent.color, color: 'white' }"
-              size="small"
-            >
-              {{ agent.initials }}
-            </a-avatar>
-            <span>{{ agent.name.split(' ')[0] }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Date Range Filter -->
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-gray-700">Date Range</label>
+      <div class="min-w-[200px]">
         <a-range-picker
           v-model:value="dateRange"
           format="DD/MM/YYYY"
           @change="handleDateRangeChange"
           class="w-full"
+          :dropdown-style="{ zIndex: 1050 }"
         />
+      </div>
+
+      <!-- Search Input - Moved to right -->
+      <div class="ml-auto min-w-[250px]">
+        <a-input
+          v-model:value="localFilters.search"
+          placeholder="Search..."
+          @input="debouncedApplyFilters"
+          class="h-8"
+        >
+          <template #suffix>
+            <a-button type="text" class="p-0 h-auto border-0 bg-transparent hover:bg-gray-100">
+              <i class="anticon anticon-search text-gray-400"></i>
+            </a-button>
+          </template>
+        </a-input>
       </div>
     </div>
 
-    <!-- Filter Actions -->
-    <div class="flex justify-between items-center mt-6 pt-4 border-t">
-      <div class="text-sm text-gray-500">
-        {{ activeFiltersCount }} filter{{ activeFiltersCount !== 1 ? 's' : '' }} applied
-      </div>
-      <div class="flex gap-2">
-        <a-button
-          @click="clearFilters"
-          :disabled="activeFiltersCount === 0"
+    <!-- Expanded agents view (when +N is clicked) -->
+    <div v-if="showAllAgents && remainingAgentsCount > 0" class="mt-3 pt-3 border-t">
+      <div class="flex flex-wrap gap-2">
+        <div
+          v-for="agent in hiddenAgents"
+          :key="agent.id"
+          :class="[
+            'flex items-center gap-2 px-3 py-2 rounded-full text-sm cursor-pointer transition-all',
+            isAgentSelected(agent.id) 
+              ? 'bg-pink-100 text-pink-800 ring-1 ring-pink-300' 
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          ]"
+          @click="toggleAgent(agent.id)"
         >
-          Clear All
-        </a-button>
-        <a-button
-          type="primary"
-          @click="applyFilters"
-          class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
-        >
-          Apply Filters
-        </a-button>
+          <a-avatar
+            :style="{ backgroundColor: agent.color, color: 'white' }"
+            size="small"
+          >
+            {{ agent.initials }}
+          </a-avatar>
+          <span>{{ agent.name.split(' ')[0] }}</span>
+        </div>
       </div>
+    </div>
+
+    <!-- Filter count indicator -->
+    <div v-if="activeFiltersCount > 0" class="mt-2 text-xs text-gray-500">
+      {{ activeFiltersCount }} filter{{ activeFiltersCount !== 1 ? 's' : '' }} applied
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { useAgents } from '@/composables/useAgents'
+import type { AppointmentFilters } from '@/types/appointment'
+import type { AppointmentFiltersProps, AppointmentFiltersEmits } from '@/types/ui'
+import { APPOINTMENT_STATUSES } from '@/constants/appointment'
 
-const props = defineProps({
-  filters: {
-    type: Object,
-    default: () => ({
-      search: '',
-      status: null,
-      agents: [],
-      dateRange: { start: null, end: null }
-    })
-  }
+const props = withDefaults(defineProps<AppointmentFiltersProps>(), {
+  filters: () => ({
+    search: '',
+    status: null,
+    agents: [],
+    dateRange: { start: null, end: null }
+  })
 })
 
-const emit = defineEmits(['update:filters', 'apply-filters'])
+const emit = defineEmits<AppointmentFiltersEmits>()
 
 // Use agents composable
 const { agents: availableAgents, fetchAgents } = useAgents()
 
 // Local reactive copy of filters
-const localFilters = ref({
-  search: '',
-  status: null,
-  agents: [],
-  dateRange: { start: null, end: null },
+const localFilters = ref<AppointmentFilters>({
   ...props.filters
 })
 
 // Date range for Ant Design RangePicker
-const dateRange = ref([])
+const dateRange = ref<[dayjs.Dayjs, dayjs.Dayjs] | []>([])
+
+// Show all agents toggle
+const showAllAgents = ref<boolean>(false)
 
 // Watch for external filter changes
 watch(() => props.filters, (newFilters) => {
@@ -139,24 +158,31 @@ watch(() => props.filters, (newFilters) => {
   }
 }, { deep: true })
 
-// Available options
-const statusOptions = ref([
-  { label: 'All Statuses', value: null },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Confirmed', value: 'confirmed' },
-  { label: 'In Progress', value: 'in_progress' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' }
-])
+// Available options from constants
+const statusOptions = APPOINTMENT_STATUSES
 
-// Transform agents for display
+// Transform agents for display using real colors from API
 const agents = computed(() => {
   return availableAgents.value.map(agent => ({
     id: agent.id,
     name: agent.name,
     initials: agent.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase(),
-    color: '#6366f1' // Default color since we don't have colors from Airtable
+    color: agent.color || '#6366f1' // Use agent's color from API, fallback to default
   }))
+})
+
+// Agent display logic
+const maxVisibleAgents = 5
+const visibleAgents = computed(() => {
+  return agents.value.slice(0, maxVisibleAgents)
+})
+
+const hiddenAgents = computed(() => {
+  return agents.value.slice(maxVisibleAgents)
+})
+
+const remainingAgentsCount = computed(() => {
+  return Math.max(0, agents.value.length - maxVisibleAgents)
 })
 
 // Computed properties
@@ -170,11 +196,11 @@ const activeFiltersCount = computed(() => {
 })
 
 // Methods
-const isAgentSelected = (agentId) => {
+const isAgentSelected = (agentId: string): boolean => {
   return localFilters.value.agents.includes(agentId)
 }
 
-const toggleAgent = (agentId) => {
+const toggleAgent = (agentId: string): void => {
   const agents = [...localFilters.value.agents]
   const index = agents.indexOf(agentId)
   
@@ -188,7 +214,7 @@ const toggleAgent = (agentId) => {
   applyFilters()
 }
 
-const handleDateRangeChange = (dates) => {
+const handleDateRangeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null): void => {
   if (dates && dates.length === 2) {
     localFilters.value.dateRange.start = dates[0].toDate()
     localFilters.value.dateRange.end = dates[1].toDate()
@@ -199,21 +225,11 @@ const handleDateRangeChange = (dates) => {
   applyFilters()
 }
 
-const applyFilters = () => {
+const applyFilters = (): void => {
   emit('update:filters', { ...localFilters.value })
   emit('apply-filters', { ...localFilters.value })
 }
 
-const clearFilters = () => {
-  localFilters.value = {
-    search: '',
-    status: null,
-    agents: [],
-    dateRange: { start: null, end: null }
-  }
-  dateRange.value = []
-  applyFilters()
-}
 
 // Debounced search
 const debouncedApplyFilters = useDebounceFn(applyFilters, 300)
@@ -228,6 +244,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* Custom styles for filter component */
-</style>

@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import api from '@/services/api'
-import type { Agent } from '@/types/api'
-import type { AirtableRecord, AgentFields } from '@/types/airtable'
+import type { Agent } from '@/types/agent'
+import type { AirtableAgentRecord } from '@/types/agent'
 
 export function useAgents() {
   const agents: Ref<Agent[]> = ref([])
@@ -11,16 +11,16 @@ export function useAgents() {
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
 
   // Transform Airtable agent record
-  const transformAgent = (record: AirtableRecord<AgentFields>): Agent => {
+  const transformAgent = (record: AirtableAgentRecord): Agent => {
     const fields = record.fields
     
     return {
       id: record.id,
-      number: fields.number,
+      number: fields.number || '',
       name: `${fields.agent_name || ''} ${fields.agent_surname || ''}`.trim(),
-      firstName: fields.agent_name,
-      lastName: fields.agent_surname,
-      color: fields.color,
+      firstName: fields.agent_name || '',
+      lastName: fields.agent_surname || '',
+      color: fields.color || '',
       appointments: fields.appointments || [],
       createdTime: record.createdTime
     }

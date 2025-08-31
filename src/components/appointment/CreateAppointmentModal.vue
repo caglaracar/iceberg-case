@@ -7,53 +7,38 @@
     :footer="null"
   >
     <a-form
-      :model="form"
+      :model="formData"
       @finish="handleSubmit"
       layout="vertical"
       class="space-y-6"
     >
-      <!-- Customer Information -->
+      <!-- Contact Selection -->
       <div class="space-y-4">
-        <h3 class="text-lg font-medium text-gray-900 border-b pb-2">Customer Information</h3>
+        <h3 class="text-lg font-medium text-gray-900 border-b pb-2">Contact & Address</h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <a-form-item
-            label="Customer Name"
-            :validate-status="errors.customerName ? 'error' : ''"
-            :help="errors.customerName"
-            :rules="[{ required: true, message: 'Customer name is required' }]"
+            label="Select Contact"
+            :validate-status="errors.contactId ? 'error' : ''"
+            :help="errors.contactId"
+            :rules="[{ required: true, message: 'Contact selection is required' }]"
           >
-            <a-input
-              v-model:value="form.customerName"
-              placeholder="Enter customer name"
-            />
-          </a-form-item>
-
-          <a-form-item
-            label="Email"
-            :validate-status="errors.email ? 'error' : ''"
-            :help="errors.email"
-            :rules="[{ required: true, message: 'Email is required' }]"
-          >
-            <a-input
-              v-model:value="form.email"
-              type="email"
-              placeholder="customer@example.com"
-            />
-          </a-form-item>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a-form-item
-            label="Phone Number"
-            :validate-status="errors.phone ? 'error' : ''"
-            :help="errors.phone"
-            :rules="[{ required: true, message: 'Phone number is required' }]"
-          >
-            <a-input
-              v-model:value="form.phone"
-              placeholder="+44 7700 900123"
-            />
+            <a-select
+              v-model:value="formData.contactId"
+              placeholder="Search and select a contact"
+              show-search
+              :filter-option="filterContactOption"
+              :loading="contactsLoading"
+              class="w-full"
+            >
+              <a-select-option
+                v-for="contact in availableContacts"
+                :key="contact.id"
+                :value="contact.id"
+              >
+                {{ contact.fullName }} - {{ contact.email }}
+              </a-select-option>
+            </a-select>
           </a-form-item>
 
           <a-form-item
@@ -63,7 +48,7 @@
             :rules="[{ required: true, message: 'Address is required' }]"
           >
             <a-input
-              v-model:value="form.address"
+              v-model:value="formData.address"
               placeholder="Enter address"
             />
           </a-form-item>
@@ -82,7 +67,7 @@
             :rules="[{ required: true, message: 'Date is required' }]"
           >
             <a-date-picker
-              v-model:value="form.date"
+              v-model:value="formData.date"
               placeholder="Select date"
               format="YYYY-MM-DD"
               :disabled-date="disabledDate"
@@ -97,7 +82,7 @@
             :rules="[{ required: true, message: 'Time is required' }]"
           >
             <a-time-picker
-              v-model:value="form.time"
+              v-model:value="formData.time"
               placeholder="Select time"
               format="HH:mm"
               class="w-full"
@@ -106,21 +91,27 @@
         </div>
 
         <!-- Agent Selection -->
-        <a-form-item label="Assign Agent">
+        <a-form-item 
+          label="Assign Agent(s)"
+          :validate-status="errors.agentId ? 'error' : ''"
+          :help="errors.agentId"
+          :rules="[{ required: true, message: 'At least one agent is required' }]"
+        >
           <a-select
-            v-model:value="form.agent"
-            placeholder="Select an agent"
+            v-model:value="formData.agentId"
+            mode="multiple"
+            placeholder="Select agent(s)"
             class="w-full"
             allow-clear
           >
             <a-select-option
               v-for="agent in availableAgents"
               :key="agent.id"
-              :value="agent.name"
+              :value="agent.id"
             >
               <div class="flex items-center gap-2">
                 <a-avatar
-                  :style="{ backgroundColor: '#6366f1', color: 'white' }"
+                  :style="{ backgroundColor: agent.color || '#6366f1', color: 'white' }"
                   size="small"
                 >
                   {{ getAgentInitials(agent.name) }}
@@ -129,7 +120,7 @@
               </div>
             </a-select-option>
           </a-select>
-          <div class="text-sm text-gray-500 mt-1">Select an agent for this appointment</div>
+          <div class="text-sm text-gray-500 mt-1">Select one or more agents for this appointment</div>
         </a-form-item>
       </div>
 
@@ -145,7 +136,6 @@
           type="primary"
           html-type="submit"
           :loading="isSubmitting"
-          :disabled="!isFormValid"
           class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
         >
           Create Appointment
@@ -155,39 +145,64 @@
   </a-modal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAppointments } from '@/composables/useAppointments'
 import { useAgents } from '@/composables/useAgents'
+import { useContacts } from '@/composables/useContacts'
 import dayjs from 'dayjs'
+import { validateRequired } from '@/utils/validation'
+import type { 
+  CreateAppointmentModalProps, 
+  CreateAppointmentModalEmits,
+  CreateAppointmentFormData
+} from '@/types/appointment/types'
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  }
+const props = withDefaults(defineProps<CreateAppointmentModalProps>(), {
+  visible: false
 })
 
-const emit = defineEmits(['update:visible', 'appointment-created'])
+const emit = defineEmits<CreateAppointmentModalEmits>()
 
 // Use composables for API integration
 const { createAppointment } = useAppointments()
 const { agents: availableAgents, fetchAgents } = useAgents()
+const { contacts: availableContacts, fetchContacts, loading: contactsLoading } = useContacts()
 const isSubmitting = ref(false)
 
+// Contact search filter
+const filterContactOption = (input: string, option: any) => {
+  if (!input) return true
+  
+  const contact = availableContacts.value.find(c => c.id === option.value)
+  if (!contact) return false
+  
+  const searchText = input.toLowerCase()
+  return contact.fullName.toLowerCase().includes(searchText) || 
+         contact.email.toLowerCase().includes(searchText) ||
+         contact.name.toLowerCase().includes(searchText) ||
+         contact.surname.toLowerCase().includes(searchText)
+}
+
+// Load data on component mount
+onMounted(async () => {
+  await Promise.all([
+    fetchAgents(),
+    fetchContacts()
+  ])
+})
+
 // Form data
-const form = ref({
-  customerName: '',
-  email: '',
-  phone: '',
+const formData = ref<CreateAppointmentFormData>({
+  contactId: null,
   address: '',
   date: null,
   time: null,
-  agent: null
+  agentId: []
 })
 
 // Form validation errors
-const errors = ref({})
+const errors = ref<Record<string, string>>({})
 
 // Computed properties
 const isVisible = computed({
@@ -195,61 +210,43 @@ const isVisible = computed({
   set: (value) => emit('update:visible', value)
 })
 
-const disabledDate = (current) => {
+const disabledDate = (current: dayjs.Dayjs): boolean => {
   return current && current < dayjs().startOf('day')
 }
 
-const isFormValid = computed(() => {
-  return form.value.customerName &&
-         form.value.email &&
-         form.value.phone &&
-         form.value.address &&
-         form.value.date &&
-         form.value.time &&
-         Object.keys(errors.value).length === 0
-})
 
-const getAgentInitials = (agentName) => {
+const getAgentInitials = (agentName: string): string => {
   if (!agentName) return ''
-  return agentName.split(' ').map(name => name.charAt(0)).join('').toUpperCase()
+  return agentName.split(' ').map((name: string) => name.charAt(0)).join('').toUpperCase()
 }
 
 // Methods
 
-const validateForm = () => {
-  const newErrors = {}
+const validateForm = (): boolean => {
+  const newErrors: Record<string, string> = {}
 
-  // Customer name validation
-  if (!form.value.customerName?.trim()) {
-    newErrors.customerName = 'Customer name is required'
+  // Contact validation
+  if (!formData.value.contactId) {
+    newErrors.contactId = 'Contact selection is required'
   }
 
-  // Email validation
-  if (!form.value.email?.trim()) {
-    newErrors.email = 'Email is required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    newErrors.email = 'Please enter a valid email address'
+  // Agent validation
+  if (formData.value.agentId.length === 0) {
+    newErrors.agentId = 'At least one agent must be selected'
   }
 
-  // Phone validation
-  if (!form.value.phone?.trim()) {
-    newErrors.phone = 'Phone number is required'
-  }
-
-  // Address validation
-  if (!form.value.address?.trim()) {
-    newErrors.address = 'Address is required'
-  }
+  const addressError = validateRequired(formData.value.address, 'Address')
+  if (addressError) newErrors.address = addressError
 
   // Date validation
-  if (!form.value.date) {
+  if (!formData.value.date) {
     newErrors.date = 'Date is required'
-  } else if (dayjs(form.value.date).isBefore(dayjs(), 'day')) {
+  } else if (dayjs(formData.value.date).isBefore(dayjs(), 'day')) {
     newErrors.date = 'Date cannot be in the past'
   }
 
   // Time validation
-  if (!form.value.time) {
+  if (!formData.value.time) {
     newErrors.time = 'Time is required'
   }
 
@@ -257,7 +254,8 @@ const validateForm = () => {
   return Object.keys(newErrors).length === 0
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
+  // Always run validation on submit
   if (!validateForm()) {
     return
   }
@@ -265,21 +263,27 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true
 
+    // Combine date and time into ISO format for API
+    const appointmentDateTime = dayjs(formData.value.date)
+      .hour(dayjs(formData.value.time).hour())
+      .minute(dayjs(formData.value.time).minute())
+      .toISOString()
+
+    // Create appointment with selected contact_id
     const appointmentData = {
-      customer: form.value.customerName.trim(),
-      contactEmail: form.value.email.trim(),
-      contactPhone: form.value.phone.trim(),
-      address: form.value.address.trim(),
-      date: dayjs(form.value.date).format('YYYY-MM-DD'),
-      time: form.value.time ? dayjs(form.value.time).format('HH:mm') : '',
-      agent: form.value.agent,
-      status: 'upcoming'
+      appointment_date: appointmentDateTime,
+      appointment_address: formData.value.address.trim(),
+      contact_id: [formData.value.contactId],
+      agent_id: formData.value.agentId.length > 0 ? formData.value.agentId : undefined,
+      is_cancelled: false
     }
 
     await createAppointment(appointmentData)
     
-    emit('appointment-created', appointmentData)
+    // Success (200): Close modal and emit for list refresh
+    closeModal()
     resetForm()
+    emit('appointment:created', appointmentData as any)
     
   } catch (error) {
     console.error('Failed to create appointment:', error)
@@ -288,27 +292,26 @@ const handleSubmit = async () => {
   }
 }
 
-const resetForm = () => {
-  form.value = {
-    customerName: '',
-    email: '',
-    phone: '',
+const resetForm = (): void => {
+  formData.value = {
+    contactId: null,
     address: '',
     date: null,
     time: null,
-    agent: null
+    agentId: []
   }
   errors.value = {}
 }
 
-const closeModal = () => {
+const closeModal = (): void => {
   isVisible.value = false
 }
 
-// Watch for form changes to validate in real-time
-watch(form, () => {
+// Watch for form changes to clear errors
+watch(formData, () => {
+  // Clear errors when user makes changes
   if (Object.keys(errors.value).length > 0) {
-    validateForm()
+    errors.value = {}
   }
 }, { deep: true })
 
@@ -322,6 +325,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* Custom styles for modal */
-</style>

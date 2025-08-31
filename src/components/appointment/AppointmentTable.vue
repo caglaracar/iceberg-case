@@ -88,109 +88,59 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
+import type { Appointment, AppointmentStatus } from '@/types/appointment'
+import type { 
+  AppointmentTableProps, 
+  AppointmentTableEmits
+} from '@/types/ui'
+import { APPOINTMENT_TABLE_COLUMNS, STATUS_COLORS, STATUS_LABELS, PAGINATION_CONFIG } from '@/constants/appointment'
+import { formatDate } from '@/utils/date'
 
-const props = defineProps({
-  appointments: {
-    type: Array,
-    default: () => []
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  },
-  totalRecords: {
-    type: Number,
-    default: 0
-  }
+const props = withDefaults(defineProps<AppointmentTableProps>(), {
+  appointments: () => [],
+  loading: false,
+  totalRecords: 0,
+  currentPage: 1,
+  pageSize: 10
 })
 
-const emit = defineEmits(['page-change', 'sort-change', 'view', 'edit', 'delete'])
+const emit = defineEmits<AppointmentTableEmits>()
 
-const columns = [
-  {
-    title: 'Customer',
-    key: 'customer',
-    dataIndex: 'customerName',
-    sorter: true,
-    width: 250
-  },
-  {
-    title: 'Address',
-    key: 'address',
-    dataIndex: 'address',
-    width: 200
-  },
-  {
-    title: 'Status',
-    key: 'status',
-    dataIndex: 'status',
-    sorter: true,
-    width: 120
-  },
-  {
-    title: 'Date & Time',
-    key: 'datetime',
-    dataIndex: 'date',
-    sorter: true,
-    width: 150
-  },
-  {
-    title: 'Agents',
-    key: 'agents',
-    width: 150
-  },
-  {
-    title: 'Actions',
-    key: 'actions',
-    width: 120
-  }
-]
+const columns = APPOINTMENT_TABLE_COLUMNS
 
 const paginationConfig = computed(() => ({
-  current: 1,
-  pageSize: 10,
+  current: props.currentPage,
+  pageSize: props.pageSize,
   total: props.totalRecords,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
+  showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
+  showQuickJumper: PAGINATION_CONFIG.showQuickJumper,
+  showTotal: PAGINATION_CONFIG.showTotal
 }))
 
-const getStatusLabel = (status) => {
-  const statusLabels = {
-    upcoming: 'Upcoming',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-    confirmed: 'Confirmed',
-    in_progress: 'In Progress'
-  }
-  return statusLabels[status] || status
+const getStatusLabel = (status: AppointmentStatus): string => {
+  return STATUS_LABELS[status] || status
 }
 
-const getAgentInitials = (agentName) => {
+const getAgentInitials = (agentName: string): string => {
   if (!agentName) return ''
-  return agentName.split(' ').map(name => name.charAt(0)).join('').toUpperCase()
+  return agentName.split(' ').map((name: string) => name.charAt(0)).join('').toUpperCase()
 }
 
-const getStatusColor = (status) => {
-  const mapping = {
-    upcoming: 'blue',
-    completed: 'green',
-    cancelled: 'red'
-  }
-  return mapping[status] || 'default'
+const getStatusColor = (status: AppointmentStatus): string => {
+  return STATUS_COLORS[status] || 'default'
 }
 
-const formatDate = (dateString) => {
-  return dayjs(dateString).format('DD/MM/YYYY')
-}
+// formatDate imported from utils
 
-const handleTableChange = (pagination, filters, sorter) => {
-  if (pagination.current !== paginationConfig.value.current) {
-    emit('page-change', { page: pagination.current - 1 })
+const handleTableChange = (pagination: any, _filters: any, sorter: any): void => {
+  if (pagination.current !== paginationConfig.value.current || pagination.pageSize !== paginationConfig.value.pageSize) {
+    emit('page-change', { 
+      page: pagination.current, 
+      pageSize: pagination.pageSize 
+    })
   }
   if (sorter.field) {
     emit('sort-change', {
@@ -200,15 +150,15 @@ const handleTableChange = (pagination, filters, sorter) => {
   }
 }
 
-const viewAppointment = (appointment) => {
+const viewAppointment = (appointment: Appointment): void => {
   emit('view', appointment)
 }
 
-const editAppointment = (appointment) => {
+const editAppointment = (appointment: Appointment): void => {
   emit('edit', appointment)
 }
 
-const confirmDelete = (appointment) => {
+const confirmDelete = (appointment: Appointment): void => {
   emit('delete', appointment)
 }
 </script>

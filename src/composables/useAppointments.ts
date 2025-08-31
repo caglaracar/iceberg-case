@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import api from '@/services/api'
-import type { Appointment } from '@/types/api'
-import type { AirtableRecord, AppointmentFields } from '@/types/airtable'
+import type { Appointment } from '@/types/appointment'
+import type { AirtableAppointmentRecord } from '@/types/appointment'
 
 export function useAppointments() {
   const appointments: Ref<Appointment[]> = ref([])
@@ -10,13 +10,15 @@ export function useAppointments() {
   const pagination: Ref<{offset?: string; hasMore: boolean}> = ref({
     hasMore: false
   })
+  const totalCount: Ref<number> = ref(0)
 
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
   const tableId = import.meta.env.VITE_AIRTABLE_APPOINTMENTS_TABLE_ID
 
   // Transform Airtable record to our appointment format
-  const transformAppointment = (record: AirtableRecord<AppointmentFields>): Appointment => {
+  const transformAppointment = (record: AirtableAppointmentRecord): Appointment => {
     const fields = record.fields
+    
     return {
       id: record.id,
       appointmentId: fields.appointment_id,
@@ -35,36 +37,103 @@ export function useAppointments() {
       agentId: fields.agent_id?.[0],
       agentName: fields.agent_name?.[0],
       agentSurname: fields.agent_surname?.[0],
+      agentIds: fields.agent_id || [],
+      agentNames: fields.agent_name || [],
+      agentSurnames: fields.agent_surname || [],
       isCancelled: fields.is_cancelled || false,
       createdTime: record.createdTime,
       
       // Computed properties for display
       customer: `${fields.contact_name?.[0] || ''} ${fields.contact_surname?.[0] || ''}`.trim(),
       agent: fields.agent_name?.[0] || 'Unassigned',
-      status: (fields.is_cancelled ? 'cancelled' : 'upcoming') as 'cancelled' | 'upcoming' | 'confirmed' | 'in_progress' | 'completed'
+      status: (() => {
+        if (fields.is_cancelled) return 'cancelled'
+        if (fields.appointment_date) {
+          const appointmentDate = new Date(fields.appointment_date)
+          const now = new Date()
+          if (appointmentDate < now) return 'completed'
+        }
+        return 'upcoming'
+      })() as 'cancelled' | 'upcoming' | 'completed'
     }
   }
 
-  // Fetch appointments - basit request
-  const fetchAppointments = async (options: {append?: boolean; filterByFormula?: string; offset?: string} = {}): Promise<Appointment[]> => {
+  // Get total count with a separate request
+  const fetchTotalCount = async (filterByFormula?: string): Promise<number> => {
+    try {
+      const params: any = {
+        pageSize: 100, // Get 100 records per page for counting
+        fields: ['appointment_id'] // Minimal field to reduce response size
+      }
+      
+      if (filterByFormula) params.filterByFormula = filterByFormula
+
+      let count = 0
+      let offset = undefined
+      
+      // Keep fetching pages to count total records
+      while (true) {
+        if (offset) params.offset = offset
+        
+        const response = await api.get(`/${baseId}/${tableId}`, { params })
+        count += response.data.records.length
+        
+        if (!response.data.offset) break
+        offset = response.data.offset
+      }
+      
+      return count
+    } catch (err) {
+      console.warn('Could not fetch total count:', err)
+      return appointments.value.length
+    }
+  }
+
+  // Fetch appointments with proper Airtable pagination
+  const fetchAppointments = async (options: {
+    append?: boolean; 
+    filterByFormula?: string; 
+    offset?: string;
+    pageSize?: number;
+    maxRecords?: number;
+    updateTotal?: boolean;
+  } = {}): Promise<Appointment[]> => {
     loading.value = true
     error.value = null
 
     try {
-      // Sadece basit GET request
-      const response = await api.get(`/${baseId}/${tableId}`)
+      // Build query parameters for Airtable API
+      const params: any = {}
+      
+      if (options.pageSize) params.pageSize = Math.min(options.pageSize, 100)
+      if (options.maxRecords) params.maxRecords = options.maxRecords
+      if (options.offset) params.offset = options.offset
+      if (options.filterByFormula) params.filterByFormula = options.filterByFormula
+      
+      // Add default sorting by appointment_date - proper Airtable format
+      params['sort[0][field]'] = 'appointment_date'
+      params['sort[0][direction]'] = 'desc'
+
+      console.log('API Request params:', params)
+      const response = await api.get(`/${baseId}/${tableId}`, { params })
       
       const transformedRecords = response.data.records.map(transformAppointment)
       
-      if (options.append) {
+      if (options.append && transformedRecords.length > 0) {
         appointments.value = [...appointments.value, ...transformedRecords]
       } else {
         appointments.value = transformedRecords
       }
 
+      // Update pagination info
       pagination.value = {
         offset: response.data.offset,
         hasMore: !!response.data.offset
+      }
+
+      // Get total count if needed (for first load or when filters change)
+      if (options.updateTotal !== false) {
+        totalCount.value = await fetchTotalCount(options.filterByFormula)
       }
 
       return transformedRecords
@@ -101,11 +170,11 @@ export function useAppointments() {
       const payload = {
         records: [{
           fields: {
-            appointment_date: appointmentData.date,
-            appointment_address: appointmentData.address,
-            contact_id: appointmentData.contactId ? [appointmentData.contactId] : undefined,
-            agent_id: appointmentData.agentId ? [appointmentData.agentId] : undefined,
-            is_cancelled: appointmentData.isCancelled || false
+            appointment_date: appointmentData.appointment_date,
+            appointment_address: appointmentData.appointment_address,
+            contact_id: appointmentData.contact_id,
+            agent_id: appointmentData.agent_id,
+            is_cancelled: appointmentData.is_cancelled
           }
         }]
       }
@@ -229,7 +298,6 @@ export function useAppointments() {
   }
 
   // Computed properties
-  const totalAppointments = computed(() => appointments.value.length)
   const upcomingAppointments = computed(() => 
     appointments.value.filter(apt => !apt.isCancelled)
   )
@@ -243,6 +311,7 @@ export function useAppointments() {
     loading,
     error,
     pagination,
+    totalCount,
     
     // Actions
     fetchAppointments,
@@ -255,7 +324,7 @@ export function useAppointments() {
     loadMore,
     
     // Computed
-    totalAppointments,
+    totalAppointments: computed(() => totalCount.value),
     upcomingAppointments,
     cancelledAppointments
   }
