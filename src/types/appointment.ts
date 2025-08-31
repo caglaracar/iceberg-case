@@ -14,8 +14,6 @@ export interface Appointment {
 
 export type AppointmentStatus = 
   | 'upcoming' 
-  | 'confirmed' 
-  | 'in_progress' 
   | 'completed' 
   | 'cancelled'
 
@@ -42,16 +40,24 @@ export interface CreateAppointmentData {
 
 import type { Dayjs } from 'dayjs'
 
-// Appointment-specific form validation
-export interface AppointmentFormData {
+// Create appointment form data
+export interface CreateAppointmentFormData {
   customerName: string
   email: string
   phone: string
   address: string
   date: Dayjs | null
   time: Dayjs | null
-  agent: string | null
+  agentId: string | null
 }
 
-// Component-specific interfaces moved to UI types
-export type { TableColumn, PaginationConfig, TableChangeEvent, SortChangeEvent, FormErrors } from './ui'
+// Modal types
+export interface CreateAppointmentModalProps {
+  visible: boolean
+  loading?: boolean
+}
+
+export interface CreateAppointmentModalEmits {
+  'update:visible': [visible: boolean]
+  'appointment:created': [appointment: any]
+}

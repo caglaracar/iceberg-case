@@ -2,25 +2,17 @@ import type { AppointmentStatus } from '@/types/appointment'
 
 export const APPOINTMENT_STATUSES = [
   { label: 'All Statuses', value: null },
-  { label: 'Upcoming', value: 'upcoming' as AppointmentStatus },
-  { label: 'Confirmed', value: 'confirmed' as AppointmentStatus },
-  { label: 'In Progress', value: 'in_progress' as AppointmentStatus },
-  { label: 'Completed', value: 'completed' as AppointmentStatus },
   { label: 'Cancelled', value: 'cancelled' as AppointmentStatus }
 ] as const
 
 export const STATUS_COLORS: Record<AppointmentStatus, string> = {
   upcoming: 'blue',
-  confirmed: 'cyan',
-  in_progress: 'orange',
   completed: 'green',
   cancelled: 'red'
 }
 
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   upcoming: 'Upcoming',
-  confirmed: 'Confirmed',
-  in_progress: 'In Progress',
   completed: 'Completed',
   cancelled: 'Cancelled'
 }

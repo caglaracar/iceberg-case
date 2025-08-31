@@ -15,12 +15,15 @@ export interface Appointment {
   agentId?: string
   agentName?: string
   agentSurname?: string
+  agentIds?: string[]
+  agentNames?: string[]
+  agentSurnames?: string[]
   isCancelled: boolean
   createdTime: string
   // Computed properties
   customer: string
   agent: string
-  status: 'upcoming' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'upcoming' | 'completed' | 'cancelled'
 }
 
 // Create appointment form data
@@ -94,5 +97,14 @@ export interface CreateAppointmentModalProps {
 
 export interface CreateAppointmentModalEmits {
   'update:visible': [visible: boolean]
-  'appointment:created': [appointment: Appointment]
+  'appointment:created': [appointment: any]
+}
+
+// Create appointment form data
+export interface CreateAppointmentFormData {
+  contactId: string | null
+  address: string
+  date: any
+  time: any
+  agentId: string[]
 }

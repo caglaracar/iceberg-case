@@ -92,37 +92,28 @@
 import { computed } from 'vue'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import type { Appointment, AppointmentStatus } from '@/types/appointment'
-import type { TableChangeEvent, SortChangeEvent } from '@/types/ui'
+import type { 
+  AppointmentTableProps, 
+  AppointmentTableEmits
+} from '@/types/ui'
 import { APPOINTMENT_TABLE_COLUMNS, STATUS_COLORS, STATUS_LABELS, PAGINATION_CONFIG } from '@/constants/appointment'
 import { formatDate } from '@/utils/date'
 
-interface Props {
-  appointments: Appointment[]
-  loading: boolean
-  totalRecords: number
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<AppointmentTableProps>(), {
   appointments: () => [],
   loading: false,
-  totalRecords: 0
+  totalRecords: 0,
+  currentPage: 1,
+  pageSize: 10
 })
 
-interface Emits {
-  'page-change': [event: TableChangeEvent]
-  'sort-change': [event: SortChangeEvent]
-  'view': [appointment: Appointment]
-  'edit': [appointment: Appointment]
-  'delete': [appointment: Appointment]
-}
-
-const emit = defineEmits<Emits>()
+const emit = defineEmits<AppointmentTableEmits>()
 
 const columns = APPOINTMENT_TABLE_COLUMNS
 
 const paginationConfig = computed(() => ({
-  current: 1,
-  pageSize: PAGINATION_CONFIG.defaultPageSize,
+  current: props.currentPage,
+  pageSize: props.pageSize,
   total: props.totalRecords,
   showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
   showQuickJumper: PAGINATION_CONFIG.showQuickJumper,
@@ -145,8 +136,11 @@ const getStatusColor = (status: AppointmentStatus): string => {
 // formatDate imported from utils
 
 const handleTableChange = (pagination: any, _filters: any, sorter: any): void => {
-  if (pagination.current !== paginationConfig.value.current) {
-    emit('page-change', { page: pagination.current - 1 })
+  if (pagination.current !== paginationConfig.value.current || pagination.pageSize !== paginationConfig.value.pageSize) {
+    emit('page-change', { 
+      page: pagination.current, 
+      pageSize: pagination.pageSize 
+    })
   }
   if (sorter.field) {
     emit('sort-change', {
