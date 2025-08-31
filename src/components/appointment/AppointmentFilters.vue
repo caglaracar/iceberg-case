@@ -93,40 +93,44 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { useAgents } from '@/composables/useAgents'
+import type { AppointmentFilters } from '@/types/appointment'
+import { APPOINTMENT_STATUSES } from '@/constants/appointment'
 
-const props = defineProps({
-  filters: {
-    type: Object,
-    default: () => ({
-      search: '',
-      status: null,
-      agents: [],
-      dateRange: { start: null, end: null }
-    })
-  }
+interface Props {
+  filters: AppointmentFilters
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  filters: () => ({
+    search: '',
+    status: null,
+    agents: [],
+    dateRange: { start: null, end: null }
+  })
 })
 
-const emit = defineEmits(['update:filters', 'apply-filters'])
+interface Emits {
+  'update:filters': [filters: AppointmentFilters]
+  'apply-filters': [filters: AppointmentFilters]
+}
+
+const emit = defineEmits<Emits>()
 
 // Use agents composable
 const { agents: availableAgents, fetchAgents } = useAgents()
 
 // Local reactive copy of filters
-const localFilters = ref({
-  search: '',
-  status: null,
-  agents: [],
-  dateRange: { start: null, end: null },
+const localFilters = ref<AppointmentFilters>({
   ...props.filters
 })
 
 // Date range for Ant Design RangePicker
-const dateRange = ref([])
+const dateRange = ref<[dayjs.Dayjs, dayjs.Dayjs] | []>([])
 
 // Watch for external filter changes
 watch(() => props.filters, (newFilters) => {
@@ -139,15 +143,8 @@ watch(() => props.filters, (newFilters) => {
   }
 }, { deep: true })
 
-// Available options
-const statusOptions = ref([
-  { label: 'All Statuses', value: null },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Confirmed', value: 'confirmed' },
-  { label: 'In Progress', value: 'in_progress' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' }
-])
+// Available options from constants
+const statusOptions = APPOINTMENT_STATUSES
 
 // Transform agents for display
 const agents = computed(() => {
@@ -170,11 +167,11 @@ const activeFiltersCount = computed(() => {
 })
 
 // Methods
-const isAgentSelected = (agentId) => {
+const isAgentSelected = (agentId: string): boolean => {
   return localFilters.value.agents.includes(agentId)
 }
 
-const toggleAgent = (agentId) => {
+const toggleAgent = (agentId: string): void => {
   const agents = [...localFilters.value.agents]
   const index = agents.indexOf(agentId)
   
@@ -188,7 +185,7 @@ const toggleAgent = (agentId) => {
   applyFilters()
 }
 
-const handleDateRangeChange = (dates) => {
+const handleDateRangeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null): void => {
   if (dates && dates.length === 2) {
     localFilters.value.dateRange.start = dates[0].toDate()
     localFilters.value.dateRange.end = dates[1].toDate()
@@ -199,12 +196,12 @@ const handleDateRangeChange = (dates) => {
   applyFilters()
 }
 
-const applyFilters = () => {
+const applyFilters = (): void => {
   emit('update:filters', { ...localFilters.value })
   emit('apply-filters', { ...localFilters.value })
 }
 
-const clearFilters = () => {
+const clearFilters = (): void => {
   localFilters.value = {
     search: '',
     status: null,
@@ -228,6 +225,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* Custom styles for filter component */
-</style>

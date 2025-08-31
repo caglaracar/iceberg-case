@@ -155,20 +155,29 @@
   </a-modal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAppointments } from '@/composables/useAppointments'
 import { useAgents } from '@/composables/useAgents'
 import dayjs from 'dayjs'
+import type { CreateAppointmentData, AppointmentStatus } from '@/types/appointment'
+import { validateEmail, validateRequired } from '@/utils/validation'
+import { formatDateForAPI, formatTimeForAPI } from '@/utils/date'
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  }
+interface Props {
+  visible: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  visible: false
 })
 
-const emit = defineEmits(['update:visible', 'appointment-created'])
+interface Emits {
+  'update:visible': [visible: boolean]
+  'appointment-created': [data: CreateAppointmentData]
+}
+
+const emit = defineEmits<Emits>()
 
 // Use composables for API integration
 const { createAppointment } = useAppointments()
@@ -176,7 +185,17 @@ const { agents: availableAgents, fetchAgents } = useAgents()
 const isSubmitting = ref(false)
 
 // Form data
-const form = ref({
+interface FormData {
+  customerName: string
+  email: string
+  phone: string
+  address: string
+  date: dayjs.Dayjs | null
+  time: dayjs.Dayjs | null
+  agent: string | null
+}
+
+const form = ref<FormData>({
   customerName: '',
   email: '',
   phone: '',
@@ -187,7 +206,7 @@ const form = ref({
 })
 
 // Form validation errors
-const errors = ref({})
+const errors = ref<Record<string, string>>({})
 
 // Computed properties
 const isVisible = computed({
@@ -195,7 +214,7 @@ const isVisible = computed({
   set: (value) => emit('update:visible', value)
 })
 
-const disabledDate = (current) => {
+const disabledDate = (current: dayjs.Dayjs): boolean => {
   return current && current < dayjs().startOf('day')
 }
 
@@ -209,37 +228,28 @@ const isFormValid = computed(() => {
          Object.keys(errors.value).length === 0
 })
 
-const getAgentInitials = (agentName) => {
+const getAgentInitials = (agentName: string): string => {
   if (!agentName) return ''
-  return agentName.split(' ').map(name => name.charAt(0)).join('').toUpperCase()
+  return agentName.split(' ').map((name: string) => name.charAt(0)).join('').toUpperCase()
 }
 
 // Methods
 
-const validateForm = () => {
-  const newErrors = {}
+const validateForm = (): boolean => {
+  const newErrors: Record<string, string> = {}
 
-  // Customer name validation
-  if (!form.value.customerName?.trim()) {
-    newErrors.customerName = 'Customer name is required'
-  }
+  // Use utils for validation
+  const nameError = validateRequired(form.value.customerName, 'Customer name')
+  if (nameError) newErrors.customerName = nameError
 
-  // Email validation
-  if (!form.value.email?.trim()) {
-    newErrors.email = 'Email is required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    newErrors.email = 'Please enter a valid email address'
-  }
+  const emailError = validateEmail(form.value.email)
+  if (emailError) newErrors.email = emailError
 
-  // Phone validation
-  if (!form.value.phone?.trim()) {
-    newErrors.phone = 'Phone number is required'
-  }
+  const phoneError = validateRequired(form.value.phone, 'Phone number')
+  if (phoneError) newErrors.phone = phoneError
 
-  // Address validation
-  if (!form.value.address?.trim()) {
-    newErrors.address = 'Address is required'
-  }
+  const addressError = validateRequired(form.value.address, 'Address')
+  if (addressError) newErrors.address = addressError
 
   // Date validation
   if (!form.value.date) {
@@ -257,7 +267,7 @@ const validateForm = () => {
   return Object.keys(newErrors).length === 0
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!validateForm()) {
     return
   }
@@ -270,10 +280,10 @@ const handleSubmit = async () => {
       contactEmail: form.value.email.trim(),
       contactPhone: form.value.phone.trim(),
       address: form.value.address.trim(),
-      date: dayjs(form.value.date).format('YYYY-MM-DD'),
-      time: form.value.time ? dayjs(form.value.time).format('HH:mm') : '',
-      agent: form.value.agent,
-      status: 'upcoming'
+      date: formatDateForAPI(form.value.date!),
+      time: form.value.time ? formatTimeForAPI(form.value.time) : '',
+      agent: form.value.agent || undefined,
+      status: 'upcoming' as AppointmentStatus
     }
 
     await createAppointment(appointmentData)
@@ -288,7 +298,7 @@ const handleSubmit = async () => {
   }
 }
 
-const resetForm = () => {
+const resetForm = (): void => {
   form.value = {
     customerName: '',
     email: '',
@@ -301,7 +311,7 @@ const resetForm = () => {
   errors.value = {}
 }
 
-const closeModal = () => {
+const closeModal = (): void => {
   isVisible.value = false
 }
 
@@ -322,6 +332,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* Custom styles for modal */
-</style>

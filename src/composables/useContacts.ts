@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import api from '@/services/api'
-import type { Contact } from '@/types/api'
-import type { AirtableRecord, ContactFields } from '@/types/airtable'
+import type { Contact } from '@/types/contact'
+import type { AirtableContactRecord } from '@/types/contact'
 
 export function useContacts() {
   const contacts: Ref<Contact[]> = ref([])
@@ -11,11 +11,11 @@ export function useContacts() {
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
 
   // Transform Airtable contact record
-  const transformContact = (record: AirtableRecord<ContactFields>): Contact => {
+  const transformContact = (record: AirtableContactRecord): Contact => {
     const fields = record.fields
     return {
       id: record.id,
-      contactId: fields.contact_id,
+      contactId: fields.contact_id || '',
       name: fields.contact_name || '',
       surname: fields.contact_surname || '',
       email: fields.contact_email || '',

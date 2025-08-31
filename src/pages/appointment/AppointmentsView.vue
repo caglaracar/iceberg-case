@@ -1,22 +1,10 @@
 <template>
   <div class="p-6">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Appointments</h1>
-        <p class="text-gray-600 mt-1">{{ totalAppointments }} Appointments found.</p>
-      </div>
-      <a-button 
-        type="primary"
-        @click="showCreateModal = true"
-        class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
-      >
-        <template #icon>
-          <plus-outlined />
-        </template>
-        Create Appointment
-      </a-button>
-    </div>
+    <AppointmentHeader 
+      :total-count="totalAppointments"
+      @create-appointment="handleCreateAppointment"
+    />
 
     <!-- Filters -->
     <AppointmentFilters 
@@ -33,6 +21,9 @@
         :total-records="totalAppointments"
         @page-change="handlePageChange"
         @sort-change="handleSortChange"
+        @view="handleViewAppointment"
+        @edit="handleEditAppointment"
+        @delete="handleDeleteAppointment"
       />
     </div>
 
@@ -44,18 +35,25 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
 import { useAppointments } from '@/composables/useAppointments'
+import AppointmentHeader from '@/components/appointment/AppointmentHeader.vue'
 import AppointmentFilters from '@/components/appointment/AppointmentFilters.vue'
 import AppointmentTable from '@/components/appointment/AppointmentTable.vue'
 import CreateAppointmentModal from '@/components/appointment/CreateAppointmentModal.vue'
+import type { 
+  Appointment, 
+  AppointmentFilters as FilterType,
+  CreateAppointmentData 
+} from '@/types/appointment'
+import type { TableChangeEvent, SortChangeEvent } from '@/types/ui'
+
+// ===== BUSINESS LOGIC LAYER (Page Responsibility) =====
 
 const { 
   appointments, 
   loading, 
-  error, 
   totalAppointments,
   fetchAppointments,
   searchAppointments,
@@ -63,19 +61,22 @@ const {
   createAppointment 
 } = useAppointments()
 
-const showCreateModal = ref(false)
-
-const filters = ref({
+// ===== STATE MANAGEMENT =====
+const showCreateModal = ref<boolean>(false)
+const filters = ref<FilterType>({
   search: '',
   status: null,
   agents: [],
-  dateRange: {
-    start: null,
-    end: null
-  }
+  dateRange: { start: null, end: null }
 })
 
-const handleFiltersChange = async (newFilters) => {
+// ===== EVENT HANDLERS (Business Logic) =====
+
+const handleCreateAppointment = (): void => {
+  showCreateModal.value = true
+}
+
+const handleFiltersChange = async (newFilters: FilterType): Promise<void> => {
   filters.value = { ...newFilters }
   
   try {
@@ -91,31 +92,49 @@ const handleFiltersChange = async (newFilters) => {
   }
 }
 
-const handlePageChange = async (event) => {
-  // Since Airtable pagination works differently, we'll load more records
-  // For now, just refetch - can be enhanced later with proper pagination
+const handlePageChange = async (_event: TableChangeEvent): Promise<void> => {
   await fetchAppointments()
 }
 
-const handleSortChange = async (event) => {
-  const sortConfig = [{
-    field: event.sortField === 'date' ? 'appointment_date' : event.sortField,
-    direction: event.sortOrder === 1 ? 'asc' : 'desc'
-  }]
-  
-  await fetchAppointments({ sort: JSON.stringify(sortConfig) })
+const handleSortChange = async (event: SortChangeEvent): Promise<void> => {
+  console.log('Sort requested:', event)
+  await fetchAppointments()
 }
 
-const handleAppointmentCreated = async (appointmentData) => {
+const handleAppointmentCreated = async (appointmentData: CreateAppointmentData): Promise<void> => {
   showCreateModal.value = false
   try {
     await createAppointment(appointmentData)
+    await fetchAppointments() // Refresh list
   } catch (err) {
     console.error('Create appointment error:', err)
   }
 }
 
-onMounted(async () => {
+const handleViewAppointment = (appointment: Appointment): void => {
+  console.log('View appointment:', appointment)
+  // TODO: Navigate to detail view
+}
+
+const handleEditAppointment = (appointment: Appointment): void => {
+  console.log('Edit appointment:', appointment)
+  // TODO: Open edit modal
+}
+
+const handleDeleteAppointment = async (appointment: Appointment): Promise<void> => {
+  if (confirm(`Delete appointment for ${appointment.customer}?`)) {
+    try {
+      // TODO: Implement delete API call
+      console.log('Delete appointment:', appointment)
+      await fetchAppointments() // Refresh list
+    } catch (err) {
+      console.error('Delete appointment error:', err)
+    }
+  }
+}
+
+// ===== LIFECYCLE =====
+onMounted(async (): Promise<void> => {
   try {
     await fetchAppointments()
   } catch (err) {
@@ -124,8 +143,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.appointments-view {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-</style>

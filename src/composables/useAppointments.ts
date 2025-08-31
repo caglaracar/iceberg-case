@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from 'vue'
 import api from '@/services/api'
-import type { Appointment } from '@/types/api'
-import type { AirtableRecord, AppointmentFields } from '@/types/airtable'
+import type { Appointment } from '@/types/appointment'
+import type { AirtableAppointmentRecord } from '@/types/appointment'
 
 export function useAppointments() {
   const appointments: Ref<Appointment[]> = ref([])
@@ -15,7 +15,7 @@ export function useAppointments() {
   const tableId = import.meta.env.VITE_AIRTABLE_APPOINTMENTS_TABLE_ID
 
   // Transform Airtable record to our appointment format
-  const transformAppointment = (record: AirtableRecord<AppointmentFields>): Appointment => {
+  const transformAppointment = (record: AirtableAppointmentRecord): Appointment => {
     const fields = record.fields
     return {
       id: record.id,
