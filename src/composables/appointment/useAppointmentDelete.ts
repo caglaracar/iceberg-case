@@ -1,8 +1,8 @@
 import { ref } from 'vue'
-import { useAppointments } from './useAppointments'
+import { useAppointments } from './useAppointments.ts'
 
-export function useAppointmentDelete() {
-  const { deleteAppointment, fetchAppointments } = useAppointments()
+export function useAppointmentDelete(refreshCallback?: () => Promise<void>) {
+  const { deleteAppointment } = useAppointments()
   
   const showConfirmModal = ref(false)
   const appointmentToDelete = ref<string | null>(null)
@@ -19,7 +19,12 @@ export function useAppointmentDelete() {
     try {
       isDeleting.value = true
       await deleteAppointment(appointmentToDelete.value)
-      await fetchAppointments()
+      
+      // Use provided refresh callback instead of internal fetchAppointments
+      if (refreshCallback) {
+        await refreshCallback()
+      }
+      
       showConfirmModal.value = false
       appointmentToDelete.value = null
     } catch (error) {

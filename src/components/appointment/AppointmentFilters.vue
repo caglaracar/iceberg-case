@@ -1,7 +1,7 @@
 <template>
   <div class="appointment-filters bg-white p-4 rounded-lg shadow-sm border">
-    <!-- Compact horizontal layout -->
-    <div class="flex items-center gap-4 flex-wrap">
+    <!-- Responsive layout -->
+    <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-4">
       <!-- Agent Filter - Show max 5 + counter (First) -->
       <div class="flex items-center gap-2">
         <div
@@ -33,47 +33,50 @@
         </div>
       </div>
 
-      <!-- Status Filter -->
-      <div class="min-w-[140px]">
-        <a-select
-          v-model:value="localFilters.status"
-          placeholder="All Statuses"
-          class="w-full"
-          @change="applyFilters"
-          allow-clear
-          :dropdown-style="{ zIndex: 1050 }"
-        >
-          <a-select-option
-            v-for="option in statusOptions"
-            :key="option.value"
-            :value="option.value"
+      <!-- Mobile: Second Row - Status & Date Range -->
+      <div class="flex flex-col sm:flex-row gap-3 w-full">
+        <!-- Status Filter -->
+        <div class="flex-1 min-w-0">
+          <a-select
+            v-model:value="localFilters.status"
+            placeholder="All Statuses"
+            class="w-full"
+            @change="applyFilters"
+            allow-clear
+            :dropdown-style="{ zIndex: 1050 }"
           >
-            {{ option.label }}
-          </a-select-option>
-        </a-select>
+            <a-select-option
+              v-for="option in statusOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-select-option>
+          </a-select>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="flex-1 min-w-0">
+          <a-range-picker
+            v-model:value="dateRange"
+            format="DD/MM/YYYY"
+            @change="handleDateRangeChange"
+            class="w-full"
+            :dropdown-style="{ zIndex: 1050 }"
+            :placeholder="['Start date', 'End date']"
+            :allow-clear="true"
+          />
+        </div>
       </div>
 
-      <!-- Date Range Filter -->
-      <div class="min-w-[200px]">
-        <a-range-picker
-          v-model:value="dateRange"
-          format="DD/MM/YYYY"
-          @change="handleDateRangeChange"
-          class="w-full"
-          :dropdown-style="{ zIndex: 1050 }"
-          :placeholder="['Start date', 'End date']"
-          :allow-clear="true"
-        />
-      </div>
-
-      <!-- Search Input - Header Style -->
-      <div class="ml-auto min-w-[280px]">
+      <!-- Mobile: Third Row - Search Input -->
+      <div class="w-full">
         <a-input
           v-model:value="localFilters.search"
           placeholder="Search appointments..."
           @keyup.enter="applyFilters"
           @input="applyFilters"
-          class="header-style-search"
+          class="header-style-search w-full"
           allow-clear
         >
           <template #suffix>
@@ -139,9 +142,9 @@
 import { ref, computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { SearchOutlined } from '@ant-design/icons-vue'
-import { useAgents } from '@/composables/useAgents'
+import { useAgents } from '@/composables/agent/useAgents.ts'
 import type { AppointmentFilters } from '@/types/appointment/core'
-import { APPOINTMENT_STATUSES } from '@/constants/appointment'
+import { APPOINTMENT_STATUSES } from '@/constants/appointment/appointment.ts'
 
 const emit = defineEmits<{
   'filters-changed': [filters: AppointmentFilters]

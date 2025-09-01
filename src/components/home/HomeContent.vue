@@ -91,49 +91,31 @@
         <div class="p-6 border-b">
           <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
         </div>
-        <div class="p-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- New Appointment Card -->
-            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white cursor-pointer hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105" @click="handleNewAppointment">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-bold mb-2">New Appointment</h3>
-                  <p class="text-indigo-100">Schedule a new contact visit</p>
+            <div class="bg-white rounded-lg shadow-sm border p-6 cursor-pointer hover:shadow-md transition-shadow duration-200" @click="handleNewAppointment">
+              <div class="flex items-center">
+                <div class="p-3 bg-indigo-100 rounded-lg">
+                  <plus-outlined class="text-indigo-600 text-xl" />
                 </div>
-                <plus-outlined class="text-3xl opacity-80" />
-              </div>
-            </div>
-
-            <!-- Add Contact Card -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/contacts')">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-bold mb-2">Add Contact</h3>
-                  <p class="text-green-100">Register a new contact</p>
+                <div class="ml-4">
+                  <p class="text-lg font-semibold text-gray-900">New Appointment</p>
+                  <p class="text-sm text-gray-500">Schedule a new contact visit</p>
                 </div>
-                <user-add-outlined class="text-3xl opacity-80" />
-              </div>
-            </div>
-
-            <!-- Manage Agents Card -->
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white cursor-pointer hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/agents')">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-bold mb-2">Manage Agents</h3>
-                  <p class="text-purple-100">View and edit agent details</p>
-                </div>
-                <team-outlined class="text-3xl opacity-80" />
               </div>
             </div>
 
             <!-- View Schedule Card -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/appointments')">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-bold mb-2">View Schedule</h3>
-                  <p class="text-blue-100">Browse all appointments</p>
+            <div class="bg-white rounded-lg shadow-sm border p-6 cursor-pointer hover:shadow-md transition-shadow duration-200" @click="$router.push('/appointments')">
+              <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                  <calendar-outlined class="text-blue-600 text-xl" />
                 </div>
-                <calendar-outlined class="text-3xl opacity-80" />
+                <div class="ml-4">
+                  <p class="text-lg font-semibold text-gray-900">View Schedule</p>
+                  <p class="text-sm text-gray-500">Browse all appointments</p>
+                </div>
               </div>
             </div>
           </div>
@@ -155,15 +137,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useDashboard } from '@/composables/useDashboard'
+import { useDashboard } from '@/composables/dashboard/useDashboard.ts'
 import AppointmentModal from '@/components/appointment/AppointmentModal.vue'
-import { STATUS_COLORS } from '@/constants/status'
+import { STATUS_COLORS } from '@/constants/appointment/color.ts'
 import {
   CalendarOutlined,
   UserOutlined,
   TeamOutlined,
-  PlusOutlined,
-  UserAddOutlined
+  PlusOutlined
 } from '@ant-design/icons-vue'
 
 const router = useRouter()

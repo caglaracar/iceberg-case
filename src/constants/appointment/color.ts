@@ -4,5 +4,3 @@ export const STATUS_COLORS = {
   completed: 'green',
   cancelled: 'red'
 } as const
-
-export type StatusColor = typeof STATUS_COLORS[keyof typeof STATUS_COLORS]

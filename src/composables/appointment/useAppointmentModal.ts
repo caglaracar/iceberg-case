@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { Appointment } from '@/types/appointment/core'
+import type { Appointment } from '@/types/appointment/core.ts'
 
 export function useAppointmentModal() {
   const showModal = ref(false)

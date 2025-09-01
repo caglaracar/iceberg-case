@@ -2,8 +2,12 @@
   <a-modal
     v-model:open="isVisible"
     :title="modalTitle"
-    :width="800"
     :footer="mode === 'detail' ? null : undefined"
+    :width="isMobile ? '95vw' : '800px'"
+    :style="isMobile ? { top: '10px' } : {}"
+    :maskClosable="false"
+    class="appointment-modal"
+    :bodyStyle="isMobile ? { padding: '16px' } : {}"
     @cancel="closeModal"
   >
     <!-- Detail Mode - Read Only Display -->
@@ -52,17 +56,54 @@
             <a-tag 
               v-for="(agentName, index) in currentAppointment.agentNames"
               :key="index"
-              :color="getAgentColor(currentAppointment.agentIds?.[index])"
+              :color="getAgentColor(currentAppointment.agentIds?.[index] || '')"
               class="flex items-center gap-1"
             >
               <a-avatar 
-                :style="{ backgroundColor: getAgentColor(currentAppointment.agentIds?.[index]) }"
+                :style="{ backgroundColor: getAgentColor(currentAppointment.agentIds?.[index] || '') }"
                 size="small"
               >
                 {{ getAgentInitials(agentName) }}
               </a-avatar>
               {{ agentName }}
             </a-tag>
+          </div>
+        </div>
+        
+        <!-- Related Appointments -->
+        <div v-if="relatedAppointments.length > 0">
+          <label class="block text-sm font-medium text-gray-700 mb-3">Related Appointments:</label>
+          <div class="space-y-2">
+            <div 
+              v-for="appointment in relatedAppointments" 
+              :key="appointment.id"
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                  <HomeOutlined class="text-gray-400 text-sm" />
+                  <span class="text-sm text-gray-700">{{ appointment.address }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <a-badge 
+                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'" 
+                  :text="appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)" 
+                />
+                <div class="flex items-center gap-1 text-xs text-gray-500">
+                  <ClockCircleOutlined />
+                  {{ formatDate(appointment.date) }}
+                </div>
+                <div v-if="appointment.agentNames?.[0]" class="flex items-center gap-1">
+                  <a-avatar 
+                    :style="{ backgroundColor: getAgentColor(appointment.agentIds?.[0] || '') }"
+                    size="small"
+                  >
+                    {{ getAgentInitials(appointment.agentNames[0] || '') }}
+                  </a-avatar>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -75,7 +116,7 @@
       </div>
       <a-form v-else :model="formData" layout="vertical">
         <!-- Contact Selection -->
-        <a-form-item label="Contact" :validate-status="errors.contactId ? 'error' : ''" :help="errors.contactId">
+        <a-form-item label="Contact" :validate-status="errors.contactId ? 'error' : ''" :help="errors.contactId" class="mb-3">
           <a-select
             v-model:value="formData.contactId"
             placeholder="Select a contact"
@@ -86,47 +127,53 @@
             @search="handleContactSearch"
             class="contact-select"
           >
-            <template #option="{ label, email, phone }">
-              <div class="flex justify-between items-center">
-                <div>
-                  <div class="font-medium">{{ label }}</div>
-                  <div class="text-sm text-gray-500">{{ email }}</div>
-                </div>
-                <div class="text-sm text-gray-400">{{ phone }}</div>
-              </div>
-            </template>
+            <a-option
+              v-for="contact in contacts"
+              :key="contact.id"
+              :value="contact.id"
+            >
+              {{ contact.name }}
+            </a-option>
           </a-select>
         </a-form-item>
 
         <!-- Address -->
-        <a-form-item label="Address" :validate-status="errors.address ? 'error' : ''" :help="errors.address">
-          <a-input 
-            v-model:value="formData.address" 
-            placeholder="Enter appointment address" 
-          />
+        <a-form-item label="Address" class="mb-3">
+          <a-input v-model:value="formData.address" placeholder="Enter address" />
         </a-form-item>
 
-        <!-- Date Selection -->
-        <a-form-item label="Appointment Date" :validate-status="errors.date ? 'error' : ''" :help="errors.date">
-          <a-date-picker 
-            v-model:value="formData.date" 
-            style="width: 100%" 
+        <!-- Appointment Date -->
+        <a-form-item label="Appointment Date" class="mb-3">
+          <a-date-picker
+            v-model:value="formData.date"
+            placeholder="Select date"
             format="DD/MM/YYYY"
-            :disabled-date="disabledDate"
+            style="width: 100%"
           />
         </a-form-item>
 
-        <!-- Time Selection -->
-        <a-form-item label="Appointment Time" :validate-status="errors.time ? 'error' : ''" :help="errors.time">
-          <a-time-picker 
-            v-model:value="formData.time" 
-            style="width: 100%" 
+        <!-- Appointment Time -->
+        <a-form-item label="Appointment Time" class="mb-3">
+          <a-time-picker
+            v-model:value="formData.time"
+            placeholder="Select time"
             format="HH:mm"
+            style="width: 100%"
+          />
+        </a-form-item>
+
+        <!-- Status (only for edit mode) -->
+        <a-form-item v-if="mode === 'edit'" label="Status" class="mb-3">
+          <a-select
+            v-model:value="formData.status"
+            placeholder="Select status"
+            :options="statusOptions"
+            style="width: 100%"
           />
         </a-form-item>
 
         <!-- Agent Selection -->
-        <a-form-item label="Agents">
+        <a-form-item label="Agents" class="mb-3">
           <a-select
             v-model:value="formData.agentId"
             mode="multiple"
@@ -165,6 +212,66 @@
             </template>
           </a-select>
         </a-form-item>
+
+        <!-- Related Appointments in Edit Mode -->
+        <div v-if="mode === 'edit'">
+          <label class="block text-sm font-medium text-gray-700 mb-3">Related Appointments:</label>
+          
+          <!-- Loading State -->
+          <div v-if="relatedAppointmentsLoading" :class="isMobile ? 'grid grid-cols-1 gap-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
+            <div v-for="i in 3" :key="i" class="p-3 bg-gray-50 rounded-lg border animate-pulse">
+              <div class="flex items-start gap-2 mb-2">
+                <div class="w-4 h-4 bg-gray-300 rounded mt-0.5"></div>
+                <div class="w-20 h-4 bg-gray-300 rounded"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="w-16 h-4 bg-gray-300 rounded"></div>
+                <div class="flex items-center gap-1">
+                  <div class="w-12 h-3 bg-gray-300 rounded"></div>
+                  <div class="w-6 h-6 bg-gray-300 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Related Appointments Grid -->
+          <div v-else-if="relatedAppointments.length > 0" :class="isMobile ? 'space-y-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
+            <div 
+              v-for="appointment in relatedAppointments" 
+              :key="appointment.id"
+              class="p-3 bg-gray-50 rounded-lg border"
+            >
+              <div class="flex items-start gap-2 mb-2">
+                <HomeOutlined class="text-gray-400 text-sm mt-0.5 flex-shrink-0" />
+                <span class="text-sm text-gray-700 truncate">{{ appointment.address }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <a-badge 
+                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'" 
+                  :text="appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)" 
+                />
+                <div class="flex items-center gap-1">
+                  <div class="text-xs text-gray-500">
+                    {{ formatDate(appointment.date) }}
+                  </div>
+                  <div v-if="appointment.agentNames?.[0]">
+                    <a-avatar 
+                      :style="{ backgroundColor: getAgentColor(appointment.agentIds?.[0] || '') }"
+                      size="small"
+                    >
+                      {{ getAgentInitials(appointment.agentNames[0] || '') }}
+                    </a-avatar>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- No Related Appointments -->
+          <div v-else class="p-3 bg-gray-50 rounded-lg border text-center text-gray-500 text-sm mb-4">
+            No related appointments found for this contact.
+          </div>
+        </div>
       </a-form>
     </template>
 
@@ -188,12 +295,19 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { notification } from 'ant-design-vue'
-import { useAppointments } from '@/composables/useAppointments'
-import { useAgents } from '@/composables/useAgents'
-import { useContacts } from '@/composables/useContacts'
-import type { Appointment } from '@/types/appointment/core'
-import type { AppointmentModalProps, AppointmentModalEmits } from '@/types/appointment/ui'
-import type { AppointmentFormData } from '@/types/appointment/forms'
+import { HomeOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
+import { useAppointments } from '@/composables/appointment/useAppointments.ts'
+import { useAgents } from '@/composables/agent/useAgents.ts'
+import { useContacts } from '@/composables/contact/useContacts.ts'
+import type { Appointment } from '@/types/appointment/core.ts'
+import type { AppointmentModalProps, AppointmentModalEmits } from '@/types/appointment/ui.ts'
+import type { CreateAppointmentRequest } from '@/types/appointment/appointment.ts'
+
+// Mobile detection
+const isMobile = computed(() => {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth < 768
+})
 
 const props = withDefaults(defineProps<AppointmentModalProps>(), {
   visible: false,
@@ -204,8 +318,8 @@ const props = withDefaults(defineProps<AppointmentModalProps>(), {
 const emit = defineEmits<AppointmentModalEmits>()
 
 // Use composables for API integration
-const { createAppointment, getAppointment, updateAppointment } = useAppointments()
-const { agents: availableAgents, fetchAgents, loading: agentsLoading } = useAgents()
+const { createAppointment, getAppointmentById, updateAppointment, appointments, fetchAppointments } = useAppointments()
+const { agents: availableAgents, fetchAgents, loading: agentsLoading, getAgentColor } = useAgents()
 const { contacts, fetchContacts, loading: contactsLoading } = useContacts()
 
 // Modal visibility
@@ -218,15 +332,13 @@ const isVisible = computed({
 const currentAppointment = ref<Appointment | null>(null)
 
 // Form data
-const formData = ref<AppointmentFormData>({
+const formData = ref<CreateAppointmentRequest & { status?: string }>({
   contactId: null,
-  contactName: '',
-  email: '',
-  phone: '',
   address: '',
   date: null,
   time: null,
-  agentId: []
+  agentId: [],
+  status: 'upcoming'
 })
 
 // Form state
@@ -289,24 +401,68 @@ const agentOptions = computed(() => {
     }))
 })
 
+const statusOptions = computed(() => {
+  if (!formData.value.date) {
+    return [
+      { label: 'Upcoming', value: 'upcoming' },
+      { label: 'Cancelled', value: 'cancelled' }
+    ]
+  }
+  
+  const appointmentDate = dayjs(formData.value.date)
+  const now = dayjs()
+  const isPastDate = appointmentDate.isBefore(now, 'day')
+  
+  if (isPastDate) {
+    return [
+      { label: 'Completed', value: 'completed' },
+      { label: 'Cancelled', value: 'cancelled' }
+    ]
+  } else {
+    return [
+      { label: 'Upcoming', value: 'upcoming' },
+      { label: 'Cancelled', value: 'cancelled' }
+    ]
+  }
+})
+
+// Related appointments loading state - separate from main appointments loading
+const relatedAppointmentsLoading = ref(false)
+
+// Related appointments for the same contact
+const relatedAppointments = computed(() => {  
+  const contactId = formData.value.contactId || currentAppointment.value?.contactId
+  
+  if (!contactId) {
+    return []
+  }
+  
+  // Don't wait for appointmentsLoading - use appointments if available
+  if (!appointments.value?.length) {
+    return []
+  }
+  
+  const currentId = props.appointmentId || currentAppointment.value?.id
+  
+  const related = appointments.value
+    .filter(apt => 
+      apt.contactId === contactId && 
+      apt.id !== currentId
+    )
+    .slice(0, 5) // Limit to 5 related appointments
+    
+  return related
+})
+
 // Methods
 const getAgentInitials = (name: string): string => {
   return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : ''
-}
-
-const getAgentColor = (agentId?: string): string => {
-  const agent = availableAgents.value.find(a => a.id === agentId)
-  return agent?.color || '#1890ff'
 }
 
 const formatDate = (date: any): string => {
   return date ? dayjs(date).format('DD/MM/YYYY') : ''
 }
 
-
-const disabledDate = (current: dayjs.Dayjs): boolean => {
-  return current && current.isBefore(dayjs().startOf('day'))
-}
 
 const handleContactSearch = (value: string): void => {
   contactSearchQuery.value = value
@@ -359,7 +515,7 @@ const handleSubmit = async (): Promise<void> => {
       appointment_address: formData.value.address.trim(),
       contact_id: [formData.value.contactId],
       agent_id: formData.value.agentId ? (Array.isArray(formData.value.agentId) ? formData.value.agentId : [formData.value.agentId]) : undefined,
-      is_cancelled: false
+      is_cancelled: formData.value.status === 'cancelled'
     }
 
     if (props.mode === 'create') {
@@ -402,13 +558,11 @@ const handleSubmit = async (): Promise<void> => {
 const resetForm = (): void => {
   formData.value = {
     contactId: null,
-    contactName: '',
-    email: '',
-    phone: '',
     address: '',
     date: null,
     time: null,
-    agentId: []
+    agentId: [],
+    status: 'upcoming'
   }
   errors.value = {}
 }
@@ -425,17 +579,16 @@ const loadAppointmentData = async (): Promise<void> => {
       // Clear previous data to prevent showing old data
       currentAppointment.value = null
       
-      currentAppointment.value = await getAppointment(props.appointmentId) as any
+      currentAppointment.value = await getAppointmentById(props.appointmentId) as any
+      
       if (props.mode === 'edit' && currentAppointment.value) {
         formData.value = {
-          contactId: null,
-          contactName: currentAppointment.value.contact || '',
-          email: currentAppointment.value.contactEmail || '',
-          phone: currentAppointment.value.contactPhone || '',
+          contactId: currentAppointment.value.contactId || null,
           address: currentAppointment.value.address,
           date: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
           time: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
-          agentId: currentAppointment.value.agentIds || []
+          agentId: currentAppointment.value.agentIds || [],
+          status: currentAppointment.value.status || 'upcoming'
         }
       }
     } catch (error) {
@@ -451,17 +604,15 @@ const loadAppointmentData = async (): Promise<void> => {
   } else if (props.appointment) {
     // Use provided appointment data
     currentAppointment.value = props.appointment
-    
+
     if (props.mode === 'edit' && currentAppointment.value) {
       formData.value = {
         contactId: null,
-        contactName: currentAppointment.value.contact || '',
-        email: currentAppointment.value.contactEmail || '',
-        phone: currentAppointment.value.contactPhone || '',
         address: currentAppointment.value.address,
         date: dayjs(currentAppointment.value.date),
         time: dayjs(currentAppointment.value.time, 'HH:mm'),
-        agentId: currentAppointment.value.agentIds || []
+        agentId: currentAppointment.value.agentIds || [],
+        status: currentAppointment.value.status || 'upcoming'
       }
     }
   }
@@ -470,6 +621,17 @@ const loadAppointmentData = async (): Promise<void> => {
 // Watch for modal visibility and mode changes
 watch([() => props.visible, () => props.mode, () => props.appointmentId], async () => {
   if (props.visible) {
+    // Show skeleton for 300ms, then fetch appointments
+    if (props.mode === 'edit') {
+      relatedAppointmentsLoading.value = true
+      setTimeout(() => {
+        relatedAppointmentsLoading.value = false
+      }, 300)
+    }
+    
+    // Fetch appointments in background (non-blocking)
+    fetchAppointments()
+    
     if (props.mode === 'create') {
       resetForm()
       currentAppointment.value = null
@@ -487,7 +649,7 @@ onMounted(async () => {
       fetchContacts()
     ])
   } catch (error) {
-    // Error handled silently
+    console.error(error)
   }
 })
 </script>

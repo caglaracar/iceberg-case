@@ -1,5 +1,5 @@
 import { ref, computed, type Ref } from 'vue'
-import api from '@/services/api'
+import api from '@/services/api.ts'
 import type { Agent } from '@/types/agent'
 import type { AirtableAgentRecord } from '@/types/agent'
 
@@ -73,34 +73,27 @@ export function useAgents() {
     }
   }
 
-  // Search agents - use cache first
-  const searchAgents = async (searchTerm: string): Promise<Agent[]> => {
-    // Ensure we have agents (will use cache if available)
-    await fetchAgents()
-    
-    if (!searchTerm.trim()) {
-      return agents.value
-    }
+  // Agent lookup utilities
+  const agentMap = computed(() => {
+    const map = new Map<string, Agent>()
+    agents.value.forEach(agent => {
+      map.set(agent.id, agent)
+    })
+    return map
+  })
 
-    return agents.value.filter(agent => 
-      agent.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const getAgentById = (id: string): Agent | undefined => {
+    return agentMap.value.get(id)
   }
 
-  // Get agent by ID
-  const getAgent = async (recordId: string): Promise<Agent> => {
-    loading.value = true
-    error.value = null
+  const getAgentColor = (id: string): string => {
+    const agent = getAgentById(id)
+    return agent?.color || '#1890ff'
+  }
 
-    try {
-      const response = await api.get(`/${baseId}/Agents/${recordId}`)
-      return transformAgent(response.data)
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch agent'
-      throw err
-    } finally {
-      loading.value = false
-    }
+  const getAgentName = (id: string): string => {
+    const agent = getAgentById(id)
+    return agent?.name || 'Unknown Agent'
   }
 
   return {
@@ -108,8 +101,11 @@ export function useAgents() {
     loading,
     error,
     fetchAgents,
-    searchAgents,
-    getAgent,
-    totalAgents: computed(() => agents.value.length)
+    totalAgents: computed(() => agents.value.length),
+    // Lookup utilities
+    agentMap,
+    getAgentById,
+    getAgentColor,
+    getAgentName
   }
 }

@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-import api from '@/services/api'
-import type { Appointment } from '@/types/appointment/core'
-import type { AirtableAppointmentRecord } from '@/types/appointment/airtable'
+import api from '@/services/api.ts'
+import type { Appointment } from '@/types/appointment/core.ts'
+import type { AirtableAppointmentRecord } from '@/types/appointment/airtable.ts'
 
 export const useAppointments = () => {
   const appointments = ref<Appointment[]>([])
@@ -55,19 +55,33 @@ export const useAppointments = () => {
     }
   }
 
-  // Fetch all appointments - simplified approach
+  // Fetch all appointments with pagination
   const fetchAppointments = async (): Promise<Appointment[]> => {
     loading.value = true
     error.value = null
 
     try {
-      const params = {
-        'sort[0][field]': 'appointment_date',
-        'sort[0][direction]': 'desc'
-      }
+      const allRecords: any[] = []
+      let offset: string | undefined = undefined
       
-      const response = await api.get(`/${baseId}/${tableId}`, { params })
-      const transformedRecords = response.data.records.map(transformAppointment)
+      do {
+        const params: any = {
+          'sort[0][field]': 'appointment_date',
+          'sort[0][direction]': 'desc',
+          pageSize: 100
+        }
+        
+        if (offset) {
+          params.offset = offset
+        }
+        
+        const response = await api.get(`/${baseId}/${tableId}`, { params })
+        allRecords.push(...response.data.records)
+        offset = response.data.offset
+        
+      } while (offset)
+      
+      const transformedRecords = allRecords.map(transformAppointment)
       
       appointments.value = transformedRecords
       totalCount.value = transformedRecords.length
@@ -82,13 +96,15 @@ export const useAppointments = () => {
   }
 
   // Get single appointment
-  const getAppointment = async (recordId: string): Promise<Appointment> => {
+  const getAppointmentById = async (recordId: string): Promise<Appointment> => {
     loading.value = true
     error.value = null
 
     try {
       const response = await api.get(`/${baseId}/${tableId}/${recordId}`)
+      console.log(response)
       return transformAppointment(response.data)
+
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch appointment'
       throw err
@@ -199,11 +215,6 @@ export const useAppointments = () => {
     }
   }
 
-  // Search appointments - simplified
-  const searchAppointments = async (): Promise<Appointment[]> => {
-    return fetchAppointments()
-  }
-
   return {
     appointments,
     loading,
@@ -211,9 +222,8 @@ export const useAppointments = () => {
     totalCount,
     fetchAppointments,
     createAppointment,
-    getAppointment,
+    getAppointmentById,
     updateAppointment,
     deleteAppointment,
-    searchAppointments
   }
 }

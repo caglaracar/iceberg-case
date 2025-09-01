@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
-import type { DashboardStats, RecentAppointment } from '@/types/dashboard'
-import { useAppointments } from './useAppointments'
-import { useAgents } from './useAgents'
-import { useContacts } from './useContacts'
+import type { DashboardStats, RecentAppointment } from '@/types/dashboard/dashboard.ts'
+import { useAppointments } from '../appointment/useAppointments.ts'
+import { useAgents } from '../agent/useAgents.ts'
+import { useContacts } from '../contact/useContacts.ts'
 import dayjs from 'dayjs'
 
 // Helper function to generate initials from name

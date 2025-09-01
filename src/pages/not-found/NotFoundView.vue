@@ -82,7 +82,7 @@ import NotFoundContent from '@/components/not-found/NotFoundContent.vue'
 const router = useRouter()
 
 const goHome = () => {
-  router.push('/appointments')
+  router.push('/home')
 }
 </script>
 

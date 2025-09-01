@@ -1,7 +1,7 @@
 <template>
   <div class="p-6">
     <!-- Filters -->
-    <AppointmentFiltersComponent 
+    <AppointmentFiltersComponent
       @filters-changed="(newFilters: AppointmentFiltersType) => filters = newFilters"
       class="mb-6"
     />
@@ -11,7 +11,7 @@
       <div>
         <p class="text-gray-600">{{ totalFilteredCount }} Appointments found.</p>
       </div>
-      <a-button 
+      <a-button
         type="primary"
         @click="createAppointment"
         class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
@@ -34,7 +34,7 @@
     />
 
     <!-- Appointment Modal -->
-    <AppointmentModal 
+    <AppointmentModal
       v-model:visible="showModal"
       :mode="modalMode"
       :appointment-id="selectedAppointmentId"
@@ -42,7 +42,7 @@
       @appointment:created="async () => { closeModal(); await fetchAppointments() }"
       @appointment:updated="async () => { closeModal(); await fetchAppointments() }"
     />
-    
+
     <!-- Delete Confirmation Modal -->
     <ConfirmationModal
       v-model:visible="showConfirmModal"
@@ -61,11 +61,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAppointments } from '@/composables/useAppointments'
-import { useAgents } from '@/composables/useAgents'
-import { useAppointmentFiltering } from '@/composables/useAppointmentFiltering'
-import { useAppointmentModal } from '@/composables/useAppointmentModal'
-import { useAppointmentDelete } from '@/composables/useAppointmentDelete'
+import { useAppointments } from '@/composables/appointment/useAppointments.ts'
+import { useAgents } from '@/composables/agent/useAgents.ts'
+import { useAppointmentFiltering } from '@/composables/appointment/useAppointmentFiltering.ts'
+import { useAppointmentModal } from '@/composables/appointment/useAppointmentModal.ts'
+import { useAppointmentDelete } from '@/composables/appointment/useAppointmentDelete.ts'
 import AppointmentFiltersComponent from '@/components/appointment/AppointmentFilters.vue'
 import AppointmentTable from '@/components/appointment/AppointmentTable.vue'
 import AppointmentModal from '@/components/appointment/AppointmentModal.vue'
@@ -79,7 +79,11 @@ const route = useRoute()
 const { appointments, loading, fetchAppointments } = useAppointments()
 const { agents: availableAgents, fetchAgents } = useAgents()
 const { showModal, modalMode, selectedAppointmentId, selectedAppointment, createAppointment, viewAppointment, editAppointment, closeModal } = useAppointmentModal()
-const { showConfirmModal, isDeleting, confirmDelete, executeDelete, cancelDelete } = useAppointmentDelete()
+const refreshAppointments = async (): Promise<void> => {
+  await fetchAppointments()
+}
+
+const { showConfirmModal, isDeleting, confirmDelete, executeDelete, cancelDelete } = useAppointmentDelete(refreshAppointments)
 
 // Minimal state for table filtering
 const filters = ref<AppointmentFiltersType>({

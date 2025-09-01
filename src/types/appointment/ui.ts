@@ -1,40 +1,6 @@
 // UI component types for appointment components
 
-import type { Appointment, AppointmentFilters } from './core'
-
-// Table component props and emits
-export interface AppointmentTableProps {
-  appointments: Appointment[]
-  loading?: boolean
-  pagination?: {
-    current: number
-    pageSize: number
-    total: number
-    showSizeChanger?: boolean
-    showQuickJumper?: boolean
-    showTotal?: (total: number, range: [number, number]) => string
-  }
-}
-
-export interface AppointmentTableEmits {
-  'view': [appointmentId: string]
-  'edit': [appointmentId: string] 
-  'delete': [appointmentId: string]
-  'page-change': [page: number, pageSize: number]
-  'sort-change': [sortData: { sortField: string; sortOrder: number }]
-}
-
-// Filters component props and emits
-export interface AppointmentFiltersProps {
-  filters?: AppointmentFilters
-  loading?: boolean
-}
-
-export interface AppointmentFiltersEmits {
-  'update:filters': [filters: AppointmentFilters]
-  'apply-filters': [filters: AppointmentFilters]
-  'filter:reset': []
-}
+import type { Appointment } from './core'
 
 // Modal component props and emits
 export interface AppointmentModalProps {

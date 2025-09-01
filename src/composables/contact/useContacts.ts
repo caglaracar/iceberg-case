@@ -1,5 +1,5 @@
 import { ref, computed, type Ref } from 'vue'
-import api from '@/services/api'
+import api from '@/services/api.ts'
 import type { Contact } from '@/types/contact'
 import type { AirtableContactRecord } from '@/types/contact'
 
@@ -62,58 +62,6 @@ export function useContacts() {
     )
   }
 
-  // Get contact by ID
-  const getContact = async (recordId: string): Promise<Contact> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const response = await api.get(`/${baseId}/Contacts/${recordId}`)
-      return transformContact(response.data)
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch contact'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Create new contact
-  const createContact = async (contactData: {
-    name: string
-    surname: string
-    email: string
-    phone: string
-  }): Promise<Contact> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const payload = {
-        records: [{
-          fields: {
-            contact_name: contactData.name,
-            contact_surname: contactData.surname,
-            contact_email: contactData.email,
-            contact_phone: contactData.phone
-          }
-        }]
-      }
-
-      const response = await api.post(`/${baseId}/Contacts`, payload)
-      const newContact = transformContact(response.data.records[0])
-      
-      // Add to local state
-      contacts.value.unshift(newContact)
-      
-      return newContact
-    } catch (err: any) {
-      error.value = err.message || 'Failed to create contact'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
 
   return {
     contacts,
@@ -121,8 +69,6 @@ export function useContacts() {
     error,
     fetchContacts,
     searchContacts,
-    getContact,
-    createContact,
     totalContacts: computed(() => contacts.value.length)
   }
 }

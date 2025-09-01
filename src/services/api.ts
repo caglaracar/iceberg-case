@@ -18,17 +18,6 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${apiKey}`
     }
     
-    // Log request in development
-    if (import.meta.env.DEV) {
-      console.log('🚀 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        data: config.data,
-        hasApiKey: !!apiKey,
-        apiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'MISSING'
-      })
-    }
-    
     return config
   },
   (error) => {
@@ -40,15 +29,6 @@ api.interceptors.request.use(
 // Response interceptor - Handle errors and responses
 api.interceptors.response.use(
   (response) => {
-    // Log response in development
-    if (import.meta.env.DEV) {
-      console.log('✅ API Response:', {
-        status: response.status,
-        url: response.config.url,
-        data: response.data
-      })
-    }
-    
     return response
   },
   (error) => {

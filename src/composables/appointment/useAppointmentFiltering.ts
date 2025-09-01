@@ -1,5 +1,5 @@
 import { computed, type Ref } from 'vue'
-import type { Appointment, AppointmentFilters } from '@/types/appointment/core'
+import type { Appointment, AppointmentFilters } from '@/types/appointment/core.ts'
 
 export function useAppointmentFiltering(
   appointments: Ref<Appointment[]>,

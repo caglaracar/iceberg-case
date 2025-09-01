@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useAgents } from '@/composables/useAgents'
+import { useAgents } from '@/composables/agent/useAgents.ts'
 import { useRouter } from 'vue-router'
 
 export const useGlobalSearchStore = defineStore('globalSearch', () => {
@@ -15,7 +15,10 @@ export const useGlobalSearchStore = defineStore('globalSearch', () => {
   
   // Computed
   const filteredAgents = computed(() => {
-    if (!searchTerm.value.trim()) return []
+    // Show all agents when search is open but no search term
+    if (!searchTerm.value.trim()) {
+      return isSearchOpen.value ? agents.value.slice(0, 10) : []
+    }
     
     const search = searchTerm.value.toLowerCase()
     return agents.value.filter(agent => 
@@ -29,7 +32,7 @@ export const useGlobalSearchStore = defineStore('globalSearch', () => {
   // Actions
   const setSearchTerm = (term: string) => {
     searchTerm.value = term
-    isSearchOpen.value = term.length > 0
+    // Keep dropdown open when typing or when focused (even if empty)
   }
   
   const selectAgent = (agentId: string) => {
@@ -55,7 +58,7 @@ export const useGlobalSearchStore = defineStore('globalSearch', () => {
     try {
       await fetchAgents()
     } catch (error) {
-      // Error handled silently
+      console.error(error)
     }
   }
   

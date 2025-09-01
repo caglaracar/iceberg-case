@@ -1,14 +1,105 @@
 <template>
   <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-    <a-table
-      :columns="tableColumns"
-      :data-source="sortedPaginatedAppointments"
-      :loading="loading"
-      :pagination="false"
-      row-key="id"
-      class="modern-table"
-      @change="handleTableChange"
-    >
+    <!-- Mobile Cards View -->
+    <div class="block md:hidden">
+      <div v-if="loading" class="space-y-4 p-4">
+        <div v-for="i in 3" :key="i" class="animate-pulse">
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-300 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="h-6 bg-gray-300 rounded-full w-20"></div>
+              <div class="h-3 bg-gray-300 rounded w-16"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div v-else class="divide-y divide-gray-100">
+        <div 
+          v-for="appointment in sortedPaginatedAppointments" 
+          :key="appointment.id"
+          class="p-4 hover:bg-gray-50 transition-colors"
+        >
+          <!-- Contact Info -->
+          <div class="flex items-start gap-3 mb-3">
+            <UserOutlined class="text-gray-400 text-lg mt-1" />
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900 truncate">{{ appointment.contact }}</div>
+              <div class="text-sm text-gray-500 truncate">{{ appointment.contactEmail }}</div>
+              <div class="text-sm text-gray-500">{{ appointment.contactPhone }}</div>
+            </div>
+          </div>
+          
+          <!-- Address -->
+          <div class="flex items-center gap-2 mb-3">
+            <HomeOutlined class="text-gray-400" />
+            <span class="text-sm text-gray-700 truncate">{{ appointment.address }}</span>
+          </div>
+          
+          <!-- Status & Date -->
+          <div class="flex items-center justify-between mb-3">
+            <div :class="getStatusBadgeClass(appointment.status)" class="status-pill">
+              {{ getStatusLabel(appointment.status) }}
+              <span v-if="appointment.status === 'upcoming'" class="countdown-badge">
+                {{ getDaysRemaining(appointment.date) }}
+              </span>
+            </div>
+            <div class="flex items-center gap-1 text-xs text-gray-500">
+              <clock-circle-outlined />
+              {{ formatDate(appointment.date) }} {{ formatTime(appointment.date) }}
+            </div>
+          </div>
+          
+          <!-- Agents -->
+          <div v-if="appointment.agentNames && appointment.agentNames.length > 0" class="flex items-center gap-1 mb-3">
+            <template v-for="(agentName, index) in appointment.agentNames.slice(0, AGENT_DISPLAY_LIMIT)" :key="index">
+              <a-avatar 
+                :style="{ backgroundColor: getAgentColor(appointment.agentIds?.[index] || '') }"
+                size="small"
+              >
+                {{ getAgentInitials(agentName, appointment.agentSurnames?.[index] || '') }}
+              </a-avatar>
+            </template>
+            <span v-if="appointment.agentNames.length > AGENT_DISPLAY_LIMIT" 
+                  class="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 ml-1">
+              +{{ appointment.agentNames.length - AGENT_DISPLAY_LIMIT }}
+            </span>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex items-center gap-2 justify-end">
+            <a-button type="text" size="small" @click="emit('view', appointment.id)">
+              <eye-outlined />
+            </a-button>
+            <a-button type="text" size="small" @click="emit('edit', appointment.id)">
+              <edit-outlined />
+            </a-button>
+            <a-button type="text" size="small" danger @click="emit('delete', appointment.id)">
+              <delete-outlined />
+            </a-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden md:block overflow-x-auto">
+      <a-table
+        :columns="tableColumns"
+        :data-source="sortedPaginatedAppointments"
+        :loading="loading"
+        :pagination="false"
+        row-key="id"
+        class="modern-table min-w-full"
+        @change="handleTableChange"
+        :scroll="{ x: 1200 }"
+      >
       <!-- Contact column -->
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'contact'">
@@ -56,7 +147,7 @@
             <template v-for="(agentName, index) in record.agentNames.slice(0, AGENT_DISPLAY_LIMIT)" :key="index">
               <a-tooltip :title="`${agentName} ${record.agentSurnames?.[index] || ''}`">
                 <a-avatar 
-                  :style="{ backgroundColor: getAgentColor(agentName, index), color: 'white' }"
+                  :style="{ backgroundColor: getAgentColor(record.agentIds?.[index] || '') }"
                   size="small"
                 >
                   {{ getAgentInitials(agentName, record.agentSurnames?.[index] || '') }}
@@ -111,6 +202,7 @@
         </template>
       </template>
     </a-table>
+    </div>
     
     <!-- Pagination -->
     <div class="p-4 border-t">
@@ -123,7 +215,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Ref, onMounted } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import { 
   ClockCircleOutlined,
   EyeOutlined, 
@@ -134,10 +226,10 @@ import {
   PhoneOutlined,
   HomeOutlined
 } from '@ant-design/icons-vue'
-import { useAppointmentFiltering } from '@/composables/useAppointmentFiltering'
-import { useAgents } from '@/composables/useAgents'
+import { useAppointmentFiltering } from '@/composables/appointment/useAppointmentFiltering.ts'
+import { useAgents } from '@/composables/agent/useAgents.ts'
 import type { Appointment, AppointmentFilters, AppointmentStatus } from '@/types/appointment/core'
-import { STATUS_LABELS, AGENT_DISPLAY_LIMIT, getAgentColorFromApi } from '@/constants/appointment'
+import { STATUS_LABELS, AGENT_DISPLAY_LIMIT } from '@/constants/appointment/appointment.ts'
 
 interface Props {
   appointments: Appointment[]
@@ -154,9 +246,6 @@ const emit = defineEmits<{
   edit: [id: string] 
   delete: [id: string]
 }>()
-
-// Use agents for dynamic colors
-const { agents, fetchAgents } = useAgents()
 
 // Internal pagination state
 const currentPage = ref(1)
@@ -257,6 +346,8 @@ const getStatusBadgeClass = (status: AppointmentStatus): string => {
   }
 }
 
+const { getAgentColor } = useAgents()
+
 const getHiddenAgentsTooltip = (agentNames: string[], agentSurnames?: string[]): string => {
   const hiddenAgents = agentNames.slice(AGENT_DISPLAY_LIMIT)
   return hiddenAgents.map((name, index) => {
@@ -290,19 +381,6 @@ const getDaysRemaining = (appointmentDate: string): string => {
   }
 }
 
-const getAgentColor = (agentName: string, index: number): string => {
-  return getAgentColorFromApi(agents.value, agentName, index)
-}
-
-// Load agents on mount
-onMounted(async () => {
-  try {
-    await fetchAgents()
-  } catch (error) {
-    console.error('Failed to fetch agents:', error)
-  }
-})
-
 // Table change handler for sorting
 const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
   if (sorter.columnKey === 'status') {
@@ -312,98 +390,5 @@ const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
 </script>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Ultra Compact Status */
-.status-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 2px 0;
-}
-
-.status-pill {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-  min-width: 120px;
-}
-
-.countdown-badge {
-  background: linear-gradient(45deg, #ff4757, #ff3838);
-  color: white;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 9px;
-  font-weight: 700;
-  margin-left: 4px;
-  box-shadow: 0 1px 3px rgba(255, 71, 87, 0.4);
-  animation: glow 1.5s ease-in-out infinite alternate;
-  white-space: nowrap;
-  min-width: 60px;
-  text-align: center;
-}
-
-.time-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 9px;
-  color: #6b7280;
-  font-weight: 400;
-}
-
-.time-icon-small {
-  width: 8px;
-  height: 8px;
-  color: #9ca3af;
-}
-
-@keyframes glow {
-  0% { 
-    box-shadow: 0 1px 3px rgba(255, 71, 87, 0.4);
-    transform: scale(1);
-  }
-  100% { 
-    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.8);
-    transform: scale(1.05);
-  }
-}
-
-/* Pill Colors */
-.badge-upcoming {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border: 1px solid #93c5fd;
-}
-
-.badge-completed {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #86efac;
-}
-
-.badge-cancelled {
-  background: #fce7f3;
-  color: #be185d;
-  border: 1px solid #f9a8d4;
-}
-
-.badge-default {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
+@import '@/assets/appointment.css';
 </style>

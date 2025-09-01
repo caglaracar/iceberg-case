@@ -1,32 +1,47 @@
 <template>
-  <a-layout-header class="bg-slate-800 shadow-lg px-4 md:px-6 flex items-center justify-between border-b border-slate-700">
-    <div class="flex items-center gap-4 relative">
-      <!-- Search -->
-      <div class="relative">
-        <a-input
-          v-model:value="searchTerm"
-          placeholder="Search agents..."
-          @input="handleSearchInput"
-          @focus="isSearchOpen = true"
-          @blur="handleSearchBlur"
-          class="w-64 md:w-80"
-        >
-          <template #suffix>
-            <search-outlined class="text-gray-400" />
-          </template>
-        </a-input>
-        
-        <!-- Search Results Dropdown -->
-        <div 
-          v-if="isSearchOpen && filteredAgents.length > 0"
-          class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border z-50 max-h-64 overflow-y-auto"
-        >
+  <a-layout-header class="bg-slate-800 shadow-lg px-2 sm:px-4 md:px-6 flex items-center justify-between border-b border-slate-700">
+    
+    <!-- Mobile Menu Toggle (Only on mobile) -->
+    <button 
+      v-if="isMobile"
+      @click="toggleSidebar"
+      class="text-white p-2 rounded hover:bg-slate-700 flex-shrink-0"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+    
+    <!-- Search (Center on mobile, left on desktop) -->
+    <div class="relative" :class="isMobile ? 'flex-1 mx-4' : 'flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg'">
+      <a-input
+        v-model:value="searchTerm"
+        :placeholder="isMobile ? 'Search...' : 'Search agents...'"
+        @input="handleSearchInput"
+        @focus="isSearchOpen = true"
+        @blur="handleSearchBlur"
+        class="w-full"
+      >
+        <template #suffix>
+          <search-outlined class="text-gray-400" />
+        </template>
+      </a-input>
+      
+      <!-- Search Results Dropdown -->
+      <div 
+        v-if="isSearchOpen"
+        class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border z-50 max-h-64 overflow-y-auto"
+      >
+        <div v-if="filteredAgents.length === 0" class="px-4 py-3 text-center text-gray-500 text-sm">
+          No agents found
+        </div>
+        <div v-else>
           <div
             v-for="agent in filteredAgents"
             :key="agent.id"
             @click="() => selectAgent(agent.id)"
             @mousedown.prevent
-            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer border-gray-100 last:border-b-0"
+            class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
           >
             <a-avatar
               :style="{ backgroundColor: agent.color, color: 'white' }"
@@ -43,30 +58,20 @@
       </div>
     </div>
     
+    <!-- User Menu -->
     <div class="flex items-center gap-2 md:gap-4">
-      
-      <!-- User Menu -->
-      <a-dropdown>
-        <a-button type="text" class="flex items-center gap-2 hover:bg-slate-700 px-3 py-1 rounded-lg transition-colors">
-          <a-avatar size="small" style="background-color: #6366f1">
-            <template #icon>
-              <user-outlined />
-            </template>
+      <a-dropdown placement="bottomRight">
+        <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors">
+          <a-avatar style="background-color: #4f46e5; color: white" size="small">
+            AU
           </a-avatar>
-          <span class="hidden md:inline text-white font-medium">Admin User</span>
-          <down-outlined class="hidden md:inline text-slate-300" />
-        </a-button>
+          <div v-if="!isMobile" class="text-white">
+            <div class="text-sm font-medium">Admin User</div>
+          </div>
+          <down-outlined v-if="!isMobile" class="text-gray-400 text-xs" />
+        </div>
         <template #overlay>
           <a-menu class="dark-menu">
-            <a-menu-item @click="navigateTo('/profile')">
-              <user-outlined />
-              <span class="ml-2">Profile</span>
-            </a-menu-item>
-            <a-menu-item @click="navigateTo('/settings')">
-              <setting-outlined />
-              <span class="ml-2">Settings</span>
-            </a-menu-item>
-            <a-menu-divider />
             <a-menu-item @click="logout">
               <logout-outlined />
               <span class="ml-2">Logout</span>
@@ -75,6 +80,7 @@
         </template>
       </a-dropdown>
     </div>
+    
   </a-layout-header>
 </template>
 
@@ -82,7 +88,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useGlobalSearchStore } from '@/stores/globalSearch'
+import { useGlobalSearchStore } from '@/stores/globalSearch.ts'
 import {
   SearchOutlined,
   UserOutlined,
@@ -94,9 +100,23 @@ import {
 const router = useRouter()
 const route = useRoute()
 
+// Mobile detection
+const isMobile = computed(() => {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth < 768
+})
+
 // Global search store
 const globalSearchStore = useGlobalSearchStore()
 const { searchTerm, isSearchOpen, filteredAgents } = storeToRefs(globalSearchStore)
+
+// Props for sidebar communication
+const props = defineProps({
+  sidebarRef: {
+    type: Object,
+    default: null
+  }
+})
 
 const navigateTo = (path) => {
   router.push(path)
@@ -106,15 +126,28 @@ const handleSearchInput = (e) => {
   globalSearchStore.setSearchTerm(e.target.value)
 }
 
-const selectAgent = (agentId) => {
-  globalSearchStore.selectAgent(agentId)
+const handleSearchBlur = () => {
+  // Use setTimeout to allow for click events on dropdown items
+  setTimeout(() => {
+    globalSearchStore.setSearchOpen(false)
+  }, 150)
 }
 
-const handleSearchBlur = () => {
-  // Delay hiding to allow click on dropdown item
-  setTimeout(() => {
-    globalSearchStore.clearSearch()
-  }, 200)
+const selectAgent = (agentId) => {
+  // Navigate to appointments with agent filter
+  router.push({
+    path: '/appointments',
+    query: { agent: agentId }
+  })
+  
+  // Clear search and close dropdown
+  globalSearchStore.clearSearch()
+}
+
+const toggleSidebar = () => {
+  if (props.sidebarRef?.toggleSidebar) {
+    props.sidebarRef.toggleSidebar()
+  }
 }
 
 const logout = () => {
