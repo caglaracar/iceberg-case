@@ -21,9 +21,9 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
 
 export const APPOINTMENT_TABLE_COLUMNS = [
   {
-    title: 'Customer',
-    key: 'customer',
-    dataIndex: 'customerName',
+    title: 'Contact',
+    key: 'contact',
+    dataIndex: 'contactName',
     sorter: true,
     width: 250
   },

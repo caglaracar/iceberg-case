@@ -23,7 +23,7 @@ export interface Appointment {
   isCancelled: boolean
   createdTime: string
   // Computed properties
-  customer: string
+  contact: string
   agent: string
   status: AppointmentStatus
 }

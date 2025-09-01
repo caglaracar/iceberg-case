@@ -9,30 +9,28 @@
       class="modern-table"
       @change="handleTableChange"
     >
-      <!-- Customer column -->
+      <!-- Contact column -->
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'customer'">
-          <div class="flex items-center gap-3">
-            <a-avatar size="default" class="bg-gradient-to-r from-blue-500 to-purple-600">
-              <span class="text-white">{{ record.customer.charAt(0).toUpperCase() }}</span>
-            </a-avatar>
-            <div class="flex flex-col">
-              <span class="font-medium text-gray-900">{{ record.customer }}</span>
-              <div class="flex items-center gap-1 text-xs text-gray-500">
-                <mail-outlined class="text-xs" />
-                <span>{{ record.contactEmail }}</span>
-              </div>
-              <div class="flex items-center gap-1 text-xs text-gray-500">
-                <phone-outlined class="text-xs" />
-                <span>{{ record.contactPhone }}</span>
-              </div>
+        <template v-if="column.key === 'contact'">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <UserOutlined class="text-gray-400 text-sm" />
+              <span class="font-medium text-gray-900">{{ record.contact }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+              <MailOutlined class="text-gray-400 text-sm" />
+              <span>{{ record.contactEmail }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+              <PhoneOutlined class="text-gray-400 text-sm" />
+              <span>{{ record.contactPhone }}</span>
             </div>
           </div>
         </template>
 
         <template v-else-if="column.key === 'address'">
           <div class="flex items-center gap-2">
-            <home-outlined class="text-gray-400" />
+            <HomeOutlined class="text-gray-400" />
             <span class="text-sm text-gray-700">{{ record.address }}</span>
           </div>
         </template>
@@ -67,10 +65,12 @@
             </template>
             
             <!-- Show +N if more than 5 agents -->
-            <span v-if="record.agentNames.length > AGENT_DISPLAY_LIMIT" 
-                  class="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 ml-1">
-              +{{ record.agentNames.length - AGENT_DISPLAY_LIMIT }}
-            </span>
+            <a-tooltip v-if="record.agentNames.length > AGENT_DISPLAY_LIMIT" 
+                       :title="getHiddenAgentsTooltip(record.agentNames, record.agentSurnames)">
+              <span class="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 ml-1 cursor-help">
+                +{{ record.agentNames.length - AGENT_DISPLAY_LIMIT }}
+              </span>
+            </a-tooltip>
           </div>
           <span v-else class="text-sm text-gray-400">No agent assigned</span>
         </template>
@@ -128,7 +128,11 @@ import {
   ClockCircleOutlined,
   EyeOutlined, 
   EditOutlined, 
-  DeleteOutlined
+  DeleteOutlined,
+  UserOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { useAppointmentFiltering } from '@/composables/useAppointmentFiltering'
 import { useAgents } from '@/composables/useAgents'
@@ -196,7 +200,7 @@ const paginationConfig = computed(() => ({
 
 // Table columns configuration - computed to react to sort changes
 const tableColumns = computed(() => [
-  { title: 'Customer', key: 'customer', dataIndex: 'customer', width: '25%' },
+  { title: 'Contact', key: 'contact', dataIndex: 'contact', width: '25%' },
   { title: 'Address', key: 'address', dataIndex: 'address', width: '25%' },
   { 
     title: 'Status & Appointment Time', 
@@ -251,6 +255,14 @@ const getStatusBadgeClass = (status: AppointmentStatus): string => {
     default:
       return 'badge-default'
   }
+}
+
+const getHiddenAgentsTooltip = (agentNames: string[], agentSurnames?: string[]): string => {
+  const hiddenAgents = agentNames.slice(AGENT_DISPLAY_LIMIT)
+  return hiddenAgents.map((name, index) => {
+    const surname = agentSurnames?.[AGENT_DISPLAY_LIMIT + index] || ''
+    return surname ? `${name} ${surname}` : name
+  }).join('\n')
 }
 
 const getDaysRemaining = (appointmentDate: string): string => {

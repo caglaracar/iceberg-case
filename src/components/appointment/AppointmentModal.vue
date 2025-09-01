@@ -14,8 +14,8 @@
       <div v-else class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-            <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.customer }}</div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+            <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.contact }}</div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -136,6 +136,7 @@
             :options="agentOptions"
             :loading="agentsLoading"
             @search="handleAgentSearch"
+            :allow-clear="true"
             style="width: 100%"
           >
             <template #option="{ label, value }">
@@ -219,13 +220,13 @@ const currentAppointment = ref<Appointment | null>(null)
 // Form data
 const formData = ref<AppointmentFormData>({
   contactId: null,
-  customerName: '',
+  contactName: '',
   email: '',
   phone: '',
   address: '',
   date: null,
   time: null,
-  agentId: null
+  agentId: []
 })
 
 // Form state
@@ -357,7 +358,7 @@ const handleSubmit = async (): Promise<void> => {
       appointment_date: appointmentDateTime,
       appointment_address: formData.value.address.trim(),
       contact_id: [formData.value.contactId],
-      agent_id: formData.value.agentId ? [formData.value.agentId] : undefined,
+      agent_id: formData.value.agentId ? (Array.isArray(formData.value.agentId) ? formData.value.agentId : [formData.value.agentId]) : undefined,
       is_cancelled: false
     }
 
@@ -401,13 +402,13 @@ const handleSubmit = async (): Promise<void> => {
 const resetForm = (): void => {
   formData.value = {
     contactId: null,
-    customerName: '',
+    contactName: '',
     email: '',
     phone: '',
     address: '',
     date: null,
     time: null,
-    agentId: null
+    agentId: []
   }
   errors.value = {}
 }
@@ -428,13 +429,13 @@ const loadAppointmentData = async (): Promise<void> => {
       if (props.mode === 'edit' && currentAppointment.value) {
         formData.value = {
           contactId: null,
-          customerName: currentAppointment.value.customer || '',
+          contactName: currentAppointment.value.contact || '',
           email: currentAppointment.value.contactEmail || '',
           phone: currentAppointment.value.contactPhone || '',
           address: currentAppointment.value.address,
           date: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
           time: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
-          agentId: currentAppointment.value.agentIds?.[0] || null
+          agentId: currentAppointment.value.agentIds || []
         }
       }
     } catch (error) {
@@ -454,13 +455,13 @@ const loadAppointmentData = async (): Promise<void> => {
     if (props.mode === 'edit' && currentAppointment.value) {
       formData.value = {
         contactId: null,
-        customerName: currentAppointment.value.customer || '',
+        contactName: currentAppointment.value.contact || '',
         email: currentAppointment.value.contactEmail || '',
         phone: currentAppointment.value.contactPhone || '',
         address: currentAppointment.value.address,
         date: dayjs(currentAppointment.value.date),
         time: dayjs(currentAppointment.value.time, 'HH:mm'),
-        agentId: currentAppointment.value.agentIds?.[0] || null
+        agentId: currentAppointment.value.agentIds || []
       }
     }
   }

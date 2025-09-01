@@ -41,7 +41,7 @@ export const useAppointments = () => {
       createdTime: record.createdTime,
       
       // Computed properties for display
-      customer: `${fields.contact_name?.[0] || ''} ${fields.contact_surname?.[0] || ''}`.trim(),
+      contact: `${fields.contact_name?.[0] || ''} ${fields.contact_surname?.[0] || ''}`.trim(),
       agent: fields.agent_name?.[0] || 'Unassigned',
       status: (() => {
         if (fields.is_cancelled) return 'cancelled'

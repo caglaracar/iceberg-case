@@ -12,7 +12,7 @@ export function useAppointmentFiltering(
     if (filters.value.search) {
       const search = filters.value.search.toLowerCase()
       filtered = filtered.filter(apt => 
-        apt.customer.toLowerCase().includes(search) ||
+        apt.contact.toLowerCase().includes(search) ||
         apt.contactEmail?.toLowerCase().includes(search) ||
         apt.contactPhone?.toString().toLowerCase().includes(search) ||
         apt.address.toLowerCase().includes(search)

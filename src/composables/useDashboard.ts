@@ -1,9 +1,18 @@
 import { ref, computed } from 'vue'
+import type { DashboardStats, RecentAppointment } from '@/types/dashboard'
 import { useAppointments } from './useAppointments'
 import { useAgents } from './useAgents'
 import { useContacts } from './useContacts'
-import type { DashboardStats, RecentAppointment } from '@/types/dashboard'
 import dayjs from 'dayjs'
+
+// Helper function to generate initials from name
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2)
+}
 
 export function useDashboard() {
   const { appointments, fetchAppointments } = useAppointments()
@@ -23,7 +32,7 @@ export function useDashboard() {
 
     return {
       todayAppointments,
-      totalCustomers: contacts.value.length,
+      totalContacts: contacts.value.length,
       activeAgents: agents.value.length
     }
   })
@@ -37,12 +46,12 @@ export function useDashboard() {
         
         return {
           id: apt.id,
-          customerName: apt.customer || 'Unknown Customer',
-          initials: apt.customer?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '??',
+          contactName: apt.contact || 'Unknown',
+          initials: getInitials(apt.contact || 'Unknown'),
           color: agent?.color || '#1890ff',
-          time: dayjs(apt.date).format('HH:mm'),
-          service: 'Appointment',
-          status: apt.status as any
+          time: apt.time,
+          service: 'Property Viewing',
+          status: apt.status
         }
       })
   })

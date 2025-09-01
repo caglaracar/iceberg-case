@@ -38,11 +38,11 @@
         <span>Appointments</span>
       </a-menu-item>
       
-      <a-menu-item key="customers" @click="navigateTo('/customers')" class="menu-item">
+      <a-menu-item key="contacts" @click="navigateTo('/contacts')" class="menu-item">
         <template #icon>
           <user-outlined />
         </template>
-        <span>Customers</span>
+        <span>Contacts</span>
       </a-menu-item>
       
       <a-menu-item key="agents" @click="navigateTo('/agents')" class="menu-item">
@@ -82,7 +82,7 @@ const selectedKeys = computed(() => {
   const path = route.path
   if (path.includes('/home') || path === '/') return ['home']
   if (path.includes('/appointments')) return ['appointments']
-  if (path.includes('/customers')) return ['customers']
+  if (path.includes('/contacts')) return ['contacts']
   if (path.includes('/agents')) return ['agents']
   if (path.includes('/reports')) return ['reports']
   return ['home']

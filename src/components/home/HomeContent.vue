@@ -32,8 +32,8 @@
             <user-outlined class="text-green-600 text-xl" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Customers</p>
-            <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.totalCustomers }}</p>
+            <p class="text-sm font-medium text-gray-500">Total Contacts</p>
+            <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.totalContacts }}</p>
           </div>
         </div>
       </div>
@@ -74,7 +74,7 @@
                   {{ appointment.initials }}
                 </a-avatar>
                 <div>
-                  <p class="font-medium text-gray-900">{{ appointment.customerName }}</p>
+                  <p class="font-medium text-gray-900">{{ appointment.contactName }}</p>
                   <p class="text-sm text-gray-500">{{ appointment.time }} - {{ appointment.service }}</p>
                 </div>
               </div>
@@ -98,18 +98,18 @@
               <div class="flex items-center justify-between">
                 <div>
                   <h3 class="text-xl font-bold mb-2">New Appointment</h3>
-                  <p class="text-indigo-100">Schedule a new customer visit</p>
+                  <p class="text-indigo-100">Schedule a new contact visit</p>
                 </div>
                 <plus-outlined class="text-3xl opacity-80" />
               </div>
             </div>
 
-            <!-- Add Customer Card -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/customers')">
+            <!-- Add Contact Card -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/contacts')">
               <div class="flex items-center justify-between">
                 <div>
-                  <h3 class="text-xl font-bold mb-2">Add Customer</h3>
-                  <p class="text-green-100">Register a new customer</p>
+                  <h3 class="text-xl font-bold mb-2">Add Contact</h3>
+                  <p class="text-green-100">Register a new contact</p>
                 </div>
                 <user-add-outlined class="text-3xl opacity-80" />
               </div>

@@ -1,12 +1,12 @@
 export interface DashboardStats {
   todayAppointments: number
-  totalCustomers: number
+  totalContacts: number
   activeAgents: number
 }
 
 export interface RecentAppointment {
   id: string
-  customerName: string
+  contactName: string
   initials: string
   color: string
   time: string
