@@ -3,6 +3,38 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Modern Table Styles */
+.modern-table .ant-table {
+  border-radius: 0;
+}
+
+.modern-table .ant-table-thead > tr > th {
+  background-color: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  padding: 16px 12px;
+}
+
+.modern-table .ant-table-tbody > tr > td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modern-table .ant-table-tbody > tr:hover > td {
+  background-color: #f8fafc;
+}
+
+.modern-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.modern-table .ant-table-placeholder {
+  border-bottom: none;
+}
+
+
 /* Custom styles */
 
 * {
@@ -28,16 +60,3 @@ html, body {
   background-color: #f9fafb;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}

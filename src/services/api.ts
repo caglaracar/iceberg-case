@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
+import { notification } from 'ant-design-vue'
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
@@ -17,21 +18,10 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${apiKey}`
     }
     
-    // Log request in development
-    if (import.meta.env.DEV) {
-      console.log('🚀 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        data: config.data,
-        hasApiKey: !!apiKey,
-        apiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'MISSING'
-      })
-    }
-    
     return config
   },
   (error) => {
-    console.error('❌ Request Error:', error)
+    // Request error logged
     return Promise.reject(error)
   }
 )
@@ -39,15 +29,6 @@ api.interceptors.request.use(
 // Response interceptor - Handle errors and responses
 api.interceptors.response.use(
   (response) => {
-    // Log response in development
-    if (import.meta.env.DEV) {
-      console.log('✅ API Response:', {
-        status: response.status,
-        url: response.config.url,
-        data: response.data
-      })
-    }
-    
     return response
   },
   (error) => {
@@ -55,31 +36,66 @@ api.interceptors.response.use(
     const errorMessage = error.response?.data?.error?.message || error.message
     const statusCode = error.response?.status
     
-    console.error('❌ API Error:', {
-      status: statusCode,
-      message: errorMessage,
-      url: error.config?.url
-    })
+    // API error details logged for debugging
     
-    // Handle specific HTTP status codes
+    // Handle specific HTTP status codes with toast notifications
     switch (statusCode) {
       case 401:
-        console.error('🔒 Authentication failed - check API key')
+        // Authentication failed
+        notification.error({
+          message: 'Authentication Failed',
+          description: 'Please check your API key configuration',
+          duration: 4
+        })
         break
       case 403:
-        console.error('🚫 Access forbidden - insufficient permissions')
+        // Access forbidden
+        notification.error({
+          message: 'Access Forbidden',
+          description: 'You don\'t have permission to perform this action',
+          duration: 4
+        })
         break
       case 404:
-        console.error('🔍 Resource not found')
+        // Resource not found
+        notification.error({
+          message: 'Resource Not Found',
+          description: 'The requested resource could not be found',
+          duration: 4
+        })
         break
       case 422:
-        console.error('📝 Validation error')
+        // Validation error
+        notification.error({
+          message: 'Validation Error',
+          description: 'Please check your input data',
+          duration: 4
+        })
         break
       case 429:
-        console.error('⏱️ Rate limit exceeded - wait 30 seconds')
+        // Rate limit exceeded
+        notification.warning({
+          message: 'Rate Limit Exceeded',
+          description: 'Too many requests. Please wait 30 seconds',
+          duration: 6
+        })
         break
       case 500:
-        console.error('🔧 Server error')
+        // Server error
+        notification.error({
+          message: 'Server Error',
+          description: 'Something went wrong on the server',
+          duration: 4
+        })
+        break
+      default:
+        if (statusCode >= 400) {
+          notification.error({
+            message: 'Request Failed',
+            description: errorMessage || 'An unexpected error occurred',
+            duration: 4
+          })
+        }
         break
     }
     

@@ -22,9 +22,3 @@ export interface AirtableAppointmentRecord {
   fields: AppointmentFields
   createdTime: string
 }
-
-// Airtable API response
-export interface AirtableAppointmentResponse {
-  records: AirtableAppointmentRecord[]
-  offset?: string
-}
