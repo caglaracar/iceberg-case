@@ -75,7 +75,6 @@ const props = defineProps({
 })
 
 
-console.log("xx")
 const emit = defineEmits(['forgot-password', 'back-to-signin'])
 
 const form = ref({
@@ -100,14 +99,10 @@ const validateForm = () => {
 }
 
 const handleForgotPassword = () => {
-  console.log('handleForgotPassword called', form.value)
-  
   if (!validateForm()) {
-    console.log('Form validation failed', errors.value)
     return
   }
 
-  console.log('Emitting forgot-password event', form.value)
   emit('forgot-password', form.value)
 }
 

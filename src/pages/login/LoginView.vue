@@ -109,14 +109,14 @@ const handleSignIn = async (formData) => {
     
     // Mock authentication - check demo credentials
     if (formData.email === 'admin@iceberg.com' && formData.password === 'admin123') {
-      console.log('Login successful, redirecting to home...')
+      // Login successful
       await router.push('/home')
     } else {
       signInFormRef.value?.setError('Invalid email or password. Use admin@iceberg.com / admin123 for demo.')
     }
   } catch (error) {
     signInFormRef.value?.setError('Login failed. Please try again.')
-    console.error('Login failed:', error)
+    // Login error handled by UI
   } finally {
     isLoading.value = false
   }
@@ -131,7 +131,7 @@ const handleSignUp = async (formData) => {
     await new Promise(resolve => setTimeout(resolve, 1500))
     
     // Mock successful registration
-    console.log('Registration successful:', formData)
+    // Registration successful
     
     // Switch to sign in view with success message
     switchView('signin')
@@ -143,7 +143,7 @@ const handleSignUp = async (formData) => {
     
   } catch (error) {
     signUpFormRef.value?.setError('Registration failed. Please try again.')
-    console.error('Registration failed:', error)
+    // Error handled by UI
   } finally {
     isLoading.value = false
   }
@@ -154,7 +154,7 @@ const handleForgotPassword = async (formData) => {
   isLoading.value = true
 
   try {
-    console.log('Forgot password initiated for:', formData.email)
+    // Forgot password initiated
     
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -165,17 +165,17 @@ const handleForgotPassword = async (formData) => {
     // Mock successful code sending
     forgotPasswordFormRef.value?.setSuccess(`Verification code sent to ${formData.email}`)
     
-    console.log('Switching to OTP view...')
+    // Switching to OTP view
     
     // Switch to OTP view after a short delay
     setTimeout(() => {
       switchView('otp')
-      console.log('Switched to OTP view')
+      // Switched to OTP view
     }, 2000)
     
   } catch (error) {
     forgotPasswordFormRef.value?.setError('Failed to send verification code. Please try again.')
-    console.error('Forgot password failed:', error)
+    // Error handled by UI
   } finally {
     isLoading.value = false
   }
@@ -191,7 +191,7 @@ const handleOTPVerification = async (otp) => {
     
     // Mock OTP validation (accept '123456' as valid)
     if (otp === '123456') {
-      console.log('OTP verified successfully')
+      // OTP verified successfully
       // In a real app, you would redirect to password reset or auto-login
       await router.push('/home')
     } else {
@@ -200,7 +200,7 @@ const handleOTPVerification = async (otp) => {
     
   } catch (error) {
     otpFormRef.value?.setError('Verification failed. Please try again.')
-    console.error('OTP verification failed:', error)
+    // Error handled by UI
   } finally {
     isLoading.value = false
   }
@@ -212,12 +212,12 @@ const handleResendCode = async () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    console.log('Verification code resent to:', forgotPasswordEmail.value)
+    // Verification code resent
     // The OTP component handles the countdown automatically
     
   } catch (error) {
     otpFormRef.value?.setError('Failed to resend code. Please try again.')
-    console.error('Resend code failed:', error)
+    // Error handled by UI
   }
 }
 </script>

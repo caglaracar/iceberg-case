@@ -1,16 +1,13 @@
-import { ref, computed, type Ref } from 'vue'
+import { ref } from 'vue'
 import api from '@/services/api'
-import type { Appointment } from '@/types/appointment'
-import type { AirtableAppointmentRecord } from '@/types/appointment'
+import type { Appointment } from '@/types/appointment/core'
+import type { AirtableAppointmentRecord } from '@/types/appointment/airtable'
 
-export function useAppointments() {
-  const appointments: Ref<Appointment[]> = ref([])
-  const loading: Ref<boolean> = ref(false)
-  const error: Ref<string | null> = ref(null)
-  const pagination: Ref<{offset?: string; hasMore: boolean}> = ref({
-    hasMore: false
-  })
-  const totalCount: Ref<number> = ref(0)
+export const useAppointments = () => {
+  const appointments = ref<Appointment[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const totalCount = ref(0)
 
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
   const tableId = import.meta.env.VITE_AIRTABLE_APPOINTMENTS_TABLE_ID
@@ -32,8 +29,8 @@ export function useAppointments() {
       contactId: fields.contact_id?.[0],
       contactName: fields.contact_name?.[0],
       contactSurname: fields.contact_surname?.[0],
-      contactEmail: fields.contact_email?.[0],
-      contactPhone: fields.contact_phone?.[0],
+      contactEmail: fields.contact_email?.[0] || '',
+      contactPhone: fields.contact_phone?.[0] || '',
       agentId: fields.agent_id?.[0],
       agentName: fields.agent_name?.[0],
       agentSurname: fields.agent_surname?.[0],
@@ -58,84 +55,23 @@ export function useAppointments() {
     }
   }
 
-  // Get total count with a separate request
-  const fetchTotalCount = async (filterByFormula?: string): Promise<number> => {
-    try {
-      const params: any = {
-        pageSize: 100, // Get 100 records per page for counting
-        fields: ['appointment_id'] // Minimal field to reduce response size
-      }
-      
-      if (filterByFormula) params.filterByFormula = filterByFormula
-
-      let count = 0
-      let offset = undefined
-      
-      // Keep fetching pages to count total records
-      while (true) {
-        if (offset) params.offset = offset
-        
-        const response = await api.get(`/${baseId}/${tableId}`, { params })
-        count += response.data.records.length
-        
-        if (!response.data.offset) break
-        offset = response.data.offset
-      }
-      
-      return count
-    } catch (err) {
-      console.warn('Could not fetch total count:', err)
-      return appointments.value.length
-    }
-  }
-
-  // Fetch appointments with proper Airtable pagination
-  const fetchAppointments = async (options: {
-    append?: boolean; 
-    filterByFormula?: string; 
-    offset?: string;
-    pageSize?: number;
-    maxRecords?: number;
-    updateTotal?: boolean;
-  } = {}): Promise<Appointment[]> => {
+  // Fetch all appointments - simplified approach
+  const fetchAppointments = async (): Promise<Appointment[]> => {
     loading.value = true
     error.value = null
 
     try {
-      // Build query parameters for Airtable API
-      const params: any = {}
+      const params = {
+        'sort[0][field]': 'appointment_date',
+        'sort[0][direction]': 'desc'
+      }
       
-      if (options.pageSize) params.pageSize = Math.min(options.pageSize, 100)
-      if (options.maxRecords) params.maxRecords = options.maxRecords
-      if (options.offset) params.offset = options.offset
-      if (options.filterByFormula) params.filterByFormula = options.filterByFormula
-      
-      // Add default sorting by appointment_date - proper Airtable format
-      params['sort[0][field]'] = 'appointment_date'
-      params['sort[0][direction]'] = 'desc'
-
-      console.log('API Request params:', params)
       const response = await api.get(`/${baseId}/${tableId}`, { params })
-      
       const transformedRecords = response.data.records.map(transformAppointment)
       
-      if (options.append && transformedRecords.length > 0) {
-        appointments.value = [...appointments.value, ...transformedRecords]
-      } else {
-        appointments.value = transformedRecords
-      }
-
-      // Update pagination info
-      pagination.value = {
-        offset: response.data.offset,
-        hasMore: !!response.data.offset
-      }
-
-      // Get total count if needed (for first load or when filters change)
-      if (options.updateTotal !== false) {
-        totalCount.value = await fetchTotalCount(options.filterByFormula)
-      }
-
+      appointments.value = transformedRecords
+      totalCount.value = transformedRecords.length
+      
       return transformedRecords
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch appointments'
@@ -195,7 +131,7 @@ export function useAppointments() {
   }
 
   // Update appointment
-  const updateAppointment = async (recordId: string, updates: any): Promise<Appointment> => {
+  const updateAppointment = async (recordId: string, appointmentData: any): Promise<Appointment> => {
     loading.value = true
     error.value = null
 
@@ -204,11 +140,11 @@ export function useAppointments() {
         records: [{
           id: recordId,
           fields: {
-            ...updates.date && { appointment_date: updates.date },
-            ...updates.address && { appointment_address: updates.address },
-            ...updates.contactId && { contact_id: [updates.contactId] },
-            ...updates.agentId && { agent_id: [updates.agentId] },
-            ...updates.hasOwnProperty('isCancelled') && { is_cancelled: updates.isCancelled }
+            appointment_date: appointmentData.appointment_date,
+            appointment_address: appointmentData.appointment_address,
+            contact_id: appointmentData.contact_id,
+            agent_id: appointmentData.agent_id,
+            is_cancelled: appointmentData.is_cancelled
           }
         }]
       }
@@ -232,19 +168,29 @@ export function useAppointments() {
   }
 
   // Delete appointment
-  const deleteAppointment = async (recordId: string): Promise<boolean> => {
+  const deleteAppointment = async (recordId: string): Promise<void> => {
     loading.value = true
     error.value = null
 
     try {
-      await api.delete(`/${baseId}/${tableId}`, {
-        params: { records: [recordId] }
+      const response = await api.delete(`/${baseId}/${tableId}`, {
+        params: {
+          'records[]': recordId
+        }
       })
-      
+
       // Remove from local state
-      appointments.value = appointments.value.filter(apt => apt.id !== recordId)
-      
-      return true
+      const index = appointments.value.findIndex(apt => apt.id === recordId)
+      if (index !== -1) {
+        appointments.value.splice(index, 1)
+      }
+
+      // Update total count
+      if (totalCount.value > 0) {
+        totalCount.value -= 1
+      }
+
+      return response.data
     } catch (err: any) {
       error.value = err.message || 'Failed to delete appointment'
       throw err
@@ -253,79 +199,21 @@ export function useAppointments() {
     }
   }
 
-  // Search appointments
-  const searchAppointments = async (searchTerm: string): Promise<Appointment[]> => {
-    if (!searchTerm.trim()) {
-      return fetchAppointments()
-    }
-
-    const formula = `OR(
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_name})),
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_surname})),
-      SEARCH(LOWER("${searchTerm}"), LOWER({contact_email})),
-      SEARCH(LOWER("${searchTerm}"), LOWER({appointment_address}))
-    )`
-
-    return fetchAppointments({ filterByFormula: formula })
+  // Search appointments - simplified
+  const searchAppointments = async (): Promise<Appointment[]> => {
+    return fetchAppointments()
   }
-
-  // Filter by status
-  const filterByStatus = async (status: string): Promise<Appointment[]> => {
-    let formula = ''
-    
-    switch (status) {
-      case 'upcoming':
-        formula = 'NOT({is_cancelled})'
-        break
-      case 'cancelled':
-        formula = '{is_cancelled}'
-        break
-      default:
-        return fetchAppointments()
-    }
-
-    return fetchAppointments({ filterByFormula: formula })
-  }
-
-  // Load more appointments (pagination)
-  const loadMore = async (): Promise<Appointment[] | undefined> => {
-    if (!pagination.value.hasMore || loading.value) return
-    
-    return fetchAppointments({
-      offset: pagination.value.offset,
-      append: true
-    })
-  }
-
-  // Computed properties
-  const upcomingAppointments = computed(() => 
-    appointments.value.filter(apt => !apt.isCancelled)
-  )
-  const cancelledAppointments = computed(() => 
-    appointments.value.filter(apt => apt.isCancelled)
-  )
 
   return {
-    // State
     appointments,
     loading,
     error,
-    pagination,
     totalCount,
-    
-    // Actions
     fetchAppointments,
-    getAppointment,
     createAppointment,
+    getAppointment,
     updateAppointment,
     deleteAppointment,
-    searchAppointments,
-    filterByStatus,
-    loadMore,
-    
-    // Computed
-    totalAppointments: computed(() => totalCount.value),
-    upcomingAppointments,
-    cancelledAppointments
+    searchAppointments
   }
 }

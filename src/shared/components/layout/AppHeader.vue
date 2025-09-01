@@ -1,12 +1,46 @@
 <template>
   <a-layout-header class="bg-slate-800 shadow-lg px-4 md:px-6 flex items-center justify-between border-b border-slate-700">
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 relative">
       <!-- Search -->
-      <a-input-search
-        placeholder="Search patients..."
-        @search="onSearch"
-        class="w-64 md:w-80"
-      />
+      <div class="relative">
+        <a-input
+          v-model:value="searchTerm"
+          placeholder="Search agents..."
+          @input="handleSearchInput"
+          @focus="isSearchOpen = true"
+          @blur="handleSearchBlur"
+          class="w-64 md:w-80"
+        >
+          <template #suffix>
+            <search-outlined class="text-gray-400" />
+          </template>
+        </a-input>
+        
+        <!-- Search Results Dropdown -->
+        <div 
+          v-if="isSearchOpen && filteredAgents.length > 0"
+          class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border z-50 max-h-64 overflow-y-auto"
+        >
+          <div
+            v-for="agent in filteredAgents"
+            :key="agent.id"
+            @click="() => selectAgent(agent.id)"
+            @mousedown.prevent
+            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer border-gray-100 last:border-b-0"
+          >
+            <a-avatar
+              :style="{ backgroundColor: agent.color, color: 'white' }"
+              size="small"
+            >
+              {{ agent.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase() }}
+            </a-avatar>
+            <div>
+              <div class="font-medium text-gray-900">{{ agent.name }}</div>
+              <div class="text-sm text-gray-500">#{{ agent.number }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="flex items-center gap-2 md:gap-4">
@@ -45,8 +79,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useGlobalSearchStore } from '@/stores/globalSearch'
 import {
   SearchOutlined,
   UserOutlined,
@@ -58,18 +94,36 @@ import {
 const router = useRouter()
 const route = useRoute()
 
+// Global search store
+const globalSearchStore = useGlobalSearchStore()
+const { searchTerm, isSearchOpen, filteredAgents } = storeToRefs(globalSearchStore)
 
 const navigateTo = (path) => {
   router.push(path)
 }
 
-const onSearch = (value) => {
-  console.log('Search:', value)
+const handleSearchInput = (e) => {
+  globalSearchStore.setSearchTerm(e.target.value)
+}
+
+const selectAgent = (agentId) => {
+  globalSearchStore.selectAgent(agentId)
+}
+
+const handleSearchBlur = () => {
+  // Delay hiding to allow click on dropdown item
+  setTimeout(() => {
+    globalSearchStore.clearSearch()
+  }, 200)
 }
 
 const logout = () => {
   router.push('/login')
 }
+
+onMounted(() => {
+  globalSearchStore.initializeAgents()
+})
 </script>
 
 <style scoped>

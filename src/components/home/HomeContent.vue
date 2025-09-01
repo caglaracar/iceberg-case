@@ -6,8 +6,14 @@
       <p class="text-gray-600">Your appointment management dashboard</p>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-8">
+      <a-spin size="large" />
+      <p class="mt-4 text-gray-500">Loading dashboard data...</p>
+    </div>
+
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <div class="bg-white rounded-lg shadow-sm border p-6">
         <div class="flex items-center">
           <div class="p-3 bg-blue-100 rounded-lg">
@@ -15,7 +21,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500">Today's Appointments</p>
-            <p class="text-2xl font-bold text-gray-900">24</p>
+            <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.todayAppointments }}</p>
           </div>
         </div>
       </div>
@@ -26,8 +32,8 @@
             <user-outlined class="text-green-600 text-xl" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Patients</p>
-            <p class="text-2xl font-bold text-gray-900">1,234</p>
+            <p class="text-sm font-medium text-gray-500">Total Customers</p>
+            <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.totalCustomers }}</p>
           </div>
         </div>
       </div>
@@ -39,19 +45,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500">Active Agents</p>
-            <p class="text-2xl font-bold text-gray-900">12</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border p-6">
-        <div class="flex items-center">
-          <div class="p-3 bg-orange-100 rounded-lg">
-            <dollar-outlined class="text-orange-600 text-xl" />
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Monthly Revenue</p>
-            <p class="text-2xl font-bold text-gray-900">₺45,600</p>
+            <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.activeAgents }}</p>
           </div>
         </div>
       </div>
@@ -70,7 +64,10 @@
           </div>
         </div>
         <div class="p-6">
-          <div class="space-y-4">
+          <div v-if="recentAppointments.length === 0" class="text-center py-4 text-gray-500">
+            No recent appointments
+          </div>
+          <div v-else class="space-y-4">
             <div v-for="appointment in recentAppointments" :key="appointment.id" class="flex items-center justify-between">
               <div class="flex items-center">
                 <a-avatar :style="{ backgroundColor: appointment.color }" class="mr-3">
@@ -94,171 +91,121 @@
         <div class="p-6 border-b">
           <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
         </div>
-        <div class="p-6">
-          <div class="grid grid-cols-2 gap-4">
-            <a-button 
-              type="primary" 
-              size="large"
-              block
-              @click="$router.push('/appointments')"
-              class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700"
-            >
-              <template #icon>
-                <plus-outlined />
-              </template>
-              New Appointment
-            </a-button>
+        <div class="p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- New Appointment Card -->
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white cursor-pointer hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105" @click="handleNewAppointment">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold mb-2">New Appointment</h3>
+                  <p class="text-indigo-100">Schedule a new customer visit</p>
+                </div>
+                <plus-outlined class="text-3xl opacity-80" />
+              </div>
+            </div>
 
-            <a-button 
-              size="large"
-              block
-              @click="$router.push('/customers')"
-            >
-              <template #icon>
-                <user-add-outlined />
-              </template>
-              Add Patient
-            </a-button>
+            <!-- Add Customer Card -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/customers')">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold mb-2">Add Customer</h3>
+                  <p class="text-green-100">Register a new customer</p>
+                </div>
+                <user-add-outlined class="text-3xl opacity-80" />
+              </div>
+            </div>
 
-            <a-button 
-              size="large"
-              block
-              @click="$router.push('/reports')"
-            >
-              <template #icon>
-                <bar-chart-outlined />
-              </template>
-              View Reports
-            </a-button>
+            <!-- Manage Agents Card -->
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white cursor-pointer hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/agents')">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold mb-2">Manage Agents</h3>
+                  <p class="text-purple-100">View and edit agent details</p>
+                </div>
+                <team-outlined class="text-3xl opacity-80" />
+              </div>
+            </div>
 
-            <a-button 
-              size="large"
-              block
-              @click="$router.push('/agents')"
-            >
-              <template #icon>
-                <team-outlined />
-              </template>
-              Manage Agents
-            </a-button>
+            <!-- View Schedule Card -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105" @click="$router.push('/appointments')">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold mb-2">View Schedule</h3>
+                  <p class="text-blue-100">Browse all appointments</p>
+                </div>
+                <calendar-outlined class="text-3xl opacity-80" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Today's Schedule -->
-    <div class="bg-white rounded-lg shadow-sm border">
-      <div class="p-6 border-b">
-        <h2 class="text-lg font-semibold text-gray-900">Today's Schedule</h2>
-      </div>
-      <div class="p-6">
-        <div class="space-y-3">
-          <div v-for="schedule in todaySchedule" :key="schedule.id" class="flex items-center p-3 bg-gray-50 rounded-lg">
-            <div class="w-16 text-center">
-              <p class="text-sm font-medium text-gray-900">{{ schedule.time }}</p>
-            </div>
-            <div class="flex-1 ml-4">
-              <p class="font-medium text-gray-900">{{ schedule.customerName }}</p>
-              <p class="text-sm text-gray-500">{{ schedule.service }} with {{ schedule.agent }}</p>
-            </div>
-            <a-tag :color="getStatusColor(schedule.status)">
-              {{ schedule.status }}
-            </a-tag>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Appointment Modal -->
+    <AppointmentModal
+      :visible="showAppointmentModal"
+      :mode="'create'"
+      @update:visible="showAppointmentModal = $event"
+      @appointment:created="handleAppointmentCreated"
+    />
+
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useDashboard } from '@/composables/useDashboard'
+import AppointmentModal from '@/components/appointment/AppointmentModal.vue'
+import { STATUS_COLORS } from '@/constants/status'
 import {
   CalendarOutlined,
   UserOutlined,
   TeamOutlined,
-  DollarOutlined,
   PlusOutlined,
-  UserAddOutlined,
-  BarChartOutlined
+  UserAddOutlined
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
+const route = useRoute()
 
-// Mock data
-const recentAppointments = ref([
-  {
-    id: 1,
-    customerName: 'Ahmet Yılmaz',
-    initials: 'AY',
-    color: '#1890ff',
-    time: '09:00',
-    service: 'Dental Cleaning',
-    status: 'upcoming'
-  },
-  {
-    id: 2,
-    customerName: 'Fatma Kaya',
-    initials: 'FK',
-    color: '#52c41a',
-    time: '10:30',
-    service: 'Consultation',
-    status: 'in-progress'
-  },
-  {
-    id: 3,
-    customerName: 'Mehmet Demir',
-    initials: 'MD',
-    color: '#faad14',
-    time: '14:00',
-    service: 'Treatment',
-    status: 'completed'
-  }
-])
+// Modal state
+const showAppointmentModal = ref(false)
 
-const todaySchedule = ref([
-  {
-    id: 1,
-    time: '09:00',
-    customerName: 'Ahmet Yılmaz',
-    service: 'Dental Cleaning',
-    agent: 'Dr. Smith',
-    status: 'upcoming'
-  },
-  {
-    id: 2,
-    time: '10:30',
-    customerName: 'Fatma Kaya',
-    service: 'Consultation',
-    agent: 'Dr. Johnson',
-    status: 'in-progress'
-  },
-  {
-    id: 3,
-    time: '14:00',
-    customerName: 'Mehmet Demir',
-    service: 'Treatment',
-    agent: 'Dr. Brown',
-    status: 'upcoming'
-  },
-  {
-    id: 4,
-    time: '16:30',
-    customerName: 'Ayşe Özkan',
-    service: 'Follow-up',
-    agent: 'Dr. Davis',
-    status: 'upcoming'
-  }
-])
+// Dashboard composable
+const {
+  loading,
+  dashboardStats,
+  recentAppointments,
+  loadDashboardData
+} = useDashboard()
 
-const getStatusColor = (status) => {
-  const colors = {
-    'upcoming': 'blue',
-    'in-progress': 'orange',
-    'completed': 'green',
-    'cancelled': 'red'
+// Modal handlers
+const handleNewAppointment = () => {
+  // If we're on home page, show modal
+  if (route.path === '/home' || route.name === 'dashboard') {
+    showAppointmentModal.value = true
+  } else {
+    // Otherwise navigate to appointments page
+    router.push('/appointments')
   }
-  return colors[status] || 'default'
 }
+
+const handleAppointmentCreated = async () => {
+  showAppointmentModal.value = false
+  // Refresh dashboard data to show new appointment
+  await loadDashboardData()
+  // Navigate to appointments page after creating
+  router.push('/appointments')
+}
+
+// Status color helper
+const getStatusColor = (status: string): string => {
+  return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'default'
+}
+
+// Load data on mount
+onMounted(async () => {
+  await loadDashboardData()
+})
 </script>
