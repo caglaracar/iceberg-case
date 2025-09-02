@@ -92,8 +92,8 @@
       </a-button>
     </form>
 
-    <div class="mt-6 text-center">
-      <span class="text-gray-600">{{ t('auth.alreadyHaveAccount') }} </span>
+    <div class="mt-6 text-center space-x-1">
+      <span class="text-gray-600">{{ t('auth.alreadyHaveAccount') }}</span>
       <a 
         href="#" 
         @click.prevent="$emit('switch-to-signin')"

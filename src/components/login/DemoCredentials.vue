@@ -1,14 +1,19 @@
 <template>
-  <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-    <h3 class="text-sm font-medium text-gray-700 mb-2">{{ t('auth.demoCredentials') }}</h3>
-    <div class="text-xs text-gray-600 space-y-1">
-      <p><strong>{{ t('auth.email') }}:</strong> admin@iceberg.com</p>
-      <p><strong>{{ t('auth.password') }}:</strong> password123</p>
+  <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-blue-600 text-lg">🚀</span>
+      <h3 class="text-sm font-semibold text-blue-800">{{ t('auth.demoCredentials') }}</h3>
     </div>
+    <div class="text-xs text-blue-700 space-y-1 mb-3">
+      <p><strong>{{ t('auth.email') }}:</strong> <code class="bg-blue-100 px-1 rounded text-blue-800">admin@iceberg.com</code></p>
+      <p><strong>{{ t('auth.password') }}:</strong> <code class="bg-blue-100 px-1 rounded text-blue-800">admin123</code></p>
+    </div>
+    <p class="text-xs text-blue-600 mb-3">{{ t('auth.demoLoginInfo') }}</p>
     <a-button
+      type="primary"
       block
       size="small"
-      class="mt-3"
+      class="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 font-medium"
       @click="$emit('use-demo')"
     >
       {{ t('auth.useDemoLogin') }}
