@@ -1,5 +1,6 @@
 import { ref } from 'vue'
-import api from '@/services/api.ts'
+import { notification } from 'ant-design-vue'
+import api from '@/services/api'
 import type { Appointment } from '@/types/appointment/core.ts'
 import type { AirtableAppointmentRecord } from '@/types/appointment/airtable.ts'
 
@@ -206,9 +207,24 @@ export const useAppointments = () => {
         totalCount.value -= 1
       }
 
+      // Show success notification
+      notification.success({
+        message: 'Success',
+        description: 'Appointment deleted successfully',
+        duration: 3
+      })
+
       return response.data
     } catch (err: any) {
       error.value = err.message || 'Failed to delete appointment'
+      
+      // Show error notification
+      notification.error({
+        message: 'Error',
+        description: err.message || 'Failed to delete appointment',
+        duration: 4
+      })
+      
       throw err
     } finally {
       loading.value = false

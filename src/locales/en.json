@@ -106,6 +106,7 @@
     "address": "Address",
     "appointmentTime": "Appointment Time",
     "appointmentDate": "Appointment Date",
+    "appointmentDateTime": "Appointment Date & Time",
     "status": "Status",
     "agents": "Agents",
     "assignedAgents": "Assigned Agents",

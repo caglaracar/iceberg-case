@@ -2,6 +2,7 @@
   <div class="p-6">
     <!-- Filters -->
     <AppointmentFiltersComponent
+      :filters="filters"
       @filters-changed="(newFilters: AppointmentFiltersType) => filters = newFilters"
       class="mb-6"
     />
@@ -101,7 +102,7 @@ const { totalFilteredCount } = useAppointmentFiltering(appointments, filters)
 
 // Route watcher for agent pre-selection
 watch(
-  () => route.query.agents,
+  () => route.query.agent, // Changed from 'agents' to 'agent'
   (agentId) => {
     if (agentId && availableAgents.value.length > 0) {
       const selectedAgentId = Array.isArray(agentId) ? agentId[0] : agentId
@@ -122,6 +123,21 @@ watch(
 // Load data
 onMounted(async () => {
   await Promise.all([fetchAppointments(), fetchAgents()])
+  
+  // Handle agent pre-selection after agents are loaded
+  const agentId = route.query.agent
+  if (agentId && availableAgents.value.length > 0) {
+    const selectedAgentId = Array.isArray(agentId) ? agentId[0] : agentId
+    const agentExists = availableAgents.value.find(a => a.id === selectedAgentId)
+    if (agentExists) {
+      filters.value = {
+        search: '',
+        status: null,
+        agents: [selectedAgentId as string],
+        dateRange: { start: null, end: null }
+      }
+    }
+  }
 })
 </script>
 

@@ -1,6 +1,70 @@
 import axios, { type AxiosInstance } from 'axios'
 import { notification } from 'ant-design-vue'
 
+// Cookie utilities for JWT
+const setCookie = (name: string, value: string, days = 7) => {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString()
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Strict; Secure=false`
+}
+
+const getCookie = (name: string): string | null => {
+  const value = document.cookie.split('; ')
+    .find(row => row.startsWith(`${name}=`))
+    ?.split('=')[1]
+  return value ? decodeURIComponent(value) : null
+}
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure=false`
+}
+
+// JWT utilities
+export const setAuthToken = (token: string) => {
+  setCookie('jwt_token', token)
+}
+
+export const getAuthToken = (): string | null => {
+  return getCookie('jwt_token')
+}
+
+export const removeAuthToken = () => {
+  deleteCookie('jwt_token')
+}
+
+export const isAuthenticated = (): boolean => {
+  return !!getAuthToken()
+}
+
+// Mock login - sets demo JWT
+export const mockLogin = (email: string, password: string): Promise<{ success: boolean; token?: string; message?: string }> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if (email === 'admin@iceberg.com' && password === 'admin123') {
+        const mockToken = btoa(JSON.stringify({
+          sub: '1',
+          email: 'admin@iceberg.com',
+          name: 'Admin User',
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+        }))
+        
+        setAuthToken(mockToken)
+        resolve({ success: true, token: mockToken })
+      } else {
+        resolve({ success: false, message: 'Invalid credentials' })
+      }
+    }, 1000)
+  })
+}
+
+// Mock logout
+export const mockLogout = (): Promise<void> => {
+  return new Promise((resolve) => {
+    removeAuthToken()
+    resolve()
+  })
+}
+
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -13,6 +77,7 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - Add authentication
 api.interceptors.request.use(
   (config) => {
+    // Use Airtable API key for data requests
     const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY
     if (apiKey) {
       config.headers.Authorization = `Bearer ${apiKey}`
@@ -21,7 +86,6 @@ api.interceptors.request.use(
     return config
   },
   (error) => {
-    // Request error logged
     return Promise.reject(error)
   }
 )
@@ -41,12 +105,11 @@ api.interceptors.response.use(
     // Handle specific HTTP status codes with toast notifications
     switch (statusCode) {
       case 401:
-        // Authentication failed
-        notification.error({
-          message: 'Authentication Failed',
-          description: 'Please check your API key configuration',
-          duration: 4
-        })
+        // Don't show auth errors for Airtable API - JWT is managed separately
+        // Only show generic error for data requests
+        if (statusCode >= 400) {
+          console.warn('API request failed:', errorMessage)
+        }
         break
       case 403:
         // Access forbidden

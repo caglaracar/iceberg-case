@@ -139,13 +139,17 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useI18n } from '@/composables/useI18n'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { useAgents } from '@/composables/agent/useAgents.ts'
 import type { AppointmentFilters } from '@/types/appointment/core'
 import { APPOINTMENT_STATUSES } from '@/constants/appointment/appointment.ts'
+
+const props = defineProps<{
+  filters?: AppointmentFilters
+}>()
 
 const emit = defineEmits<{
   'filters-changed': [filters: AppointmentFilters]
@@ -157,16 +161,35 @@ const { agents: availableAgents, fetchAgents } = useAgents()
 // i18n
 const { t } = useI18n()
 
-// Internal filters state - self-managed
+// Internal filters state - initialized from props
 const localFilters = ref<AppointmentFilters>({
-  search: '',
-  status: null,
-  agents: [],
+  search: props.filters?.search || '',
+  status: props.filters?.status || null,
+  agents: props.filters?.agents || [],
   dateRange: {
-    start: null,
-    end: null
+    start: props.filters?.dateRange?.start || null,
+    end: props.filters?.dateRange?.end || null
   }
 })
+
+// Watch for props changes to sync with parent
+watch(
+  () => props.filters,
+  (newFilters) => {
+    if (newFilters) {
+      localFilters.value = {
+        search: newFilters.search || '',
+        status: newFilters.status || null,
+        agents: newFilters.agents || [],
+        dateRange: {
+          start: newFilters.dateRange?.start || null,
+          end: newFilters.dateRange?.end || null
+        }
+      }
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 // Show all agents toggle
 const showAllAgents = ref<boolean>(false)

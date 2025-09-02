@@ -1,10 +1,10 @@
 <template>
   <div class="login-view min-h-screen flex">
     <!-- Left Side - Forms -->
-    <div class="flex-1 flex items-center justify-center bg-gray-50 p-8">
+    <div class="flex-1 flex items-center justify-center bg-gray-50 p-2">
       <div class="w-full max-w-md">
         <!-- Language Switcher -->
-        <div class="mb-8">
+        <div class="mb-2">
           <LanguageSwitcher variant="light" />
         </div>
 
@@ -60,8 +60,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 import SignInForm from '@/components/login/SignInForm.vue'
 import SignUpForm from '@/components/login/SignUpForm.vue'
 import ForgotPasswordForm from '@/components/login/ForgotPasswordForm.vue'
@@ -70,6 +71,14 @@ import BrandingSection from '@/components/login/BrandingSection.vue'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 
 const router = useRouter()
+const { login, isLoggedIn } = useAuth()
+
+// Redirect if already logged in
+onMounted(() => {
+  if (isLoggedIn.value) {
+    router.push('/')
+  }
+})
 
 // Component refs
 const signInFormRef = ref(null)
@@ -101,19 +110,14 @@ const handleSignIn = async (formData) => {
   isLoading.value = true
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const result = await login(formData.email, formData.password)
     
-    // Mock authentication - check demo credentials
-    if (formData.email === 'admin@iceberg.com' && formData.password === 'admin123') {
-      // Login successful
-      await router.push('/home')
-    } else {
-      signInFormRef.value?.setError('Invalid email or password. Use admin@iceberg.com / admin123 for demo.')
+    if (!result.success) {
+      signInFormRef.value?.setError(result.message || 'Invalid email or password. Use admin@iceberg.com / admin123 for demo.')
     }
+    // Success handling is done in useAuth (redirects to home)
   } catch (error) {
     signInFormRef.value?.setError('Login failed. Please try again.')
-    // Login error handled by UI
   } finally {
     isLoading.value = false
   }

@@ -4,10 +4,12 @@
     :title="modalTitle"
     :footer="mode === 'detail' ? null : undefined"
     :width="isMobile ? '95vw' : '800px'"
-    :style="isMobile ? { top: '10px' } : {}"
-    :maskClosable="false"
+    :style="{ top: '20px' }"
+    :maskClosable="true"
     class="appointment-modal"
     :bodyStyle="isMobile ? { padding: '16px' } : {}"
+    :getContainer="false"
+    :destroyOnClose="true"
     @cancel="closeModal"
   >
     <!-- Detail Mode - Read Only Display -->
@@ -33,22 +35,19 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.status') }}</label>
-            <a-badge :color="statusColor" :text="currentAppointment?.status" />
+            <StatusBadge 
+              :status="currentAppointment?.status as any" 
+              :date="currentAppointment?.date"
+            />
           </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.address') }}</label>
           <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.address }}</div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.appointmentDate') }}</label>
-            <div class="p-2 bg-gray-50 rounded">{{ formatDate(currentAppointment?.date) }}</div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.appointmentTime') }}</label>
-            <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.time || 'N/A' }}</div>
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.appointmentDateTime') }}</label>
+          <div class="p-2 bg-gray-50 rounded">{{ formatDate(currentAppointment?.date) }} {{ currentAppointment?.time || '' }}</div>
         </div>
         <div v-if="currentAppointment?.agentNames?.length">
           <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.agents') }}</label>
@@ -217,25 +216,8 @@
         <div v-if="mode === 'edit'">
           <label class="block text-sm font-medium text-gray-700 mb-3">{{ t('appointment.relatedAppointments') }}</label>
 
-          <!-- Loading State -->
-          <div v-if="relatedAppointmentsLoading" :class="isMobile ? 'grid grid-cols-1 gap-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
-            <div v-for="i in 3" :key="i" class="p-3 bg-gray-50 rounded-lg border animate-pulse">
-              <div class="flex items-start gap-2 mb-2">
-                <div class="w-4 h-4 bg-gray-300 rounded mt-0.5"></div>
-                <div class="w-20 h-4 bg-gray-300 rounded"></div>
-              </div>
-              <div class="flex items-center justify-between">
-                <div class="w-16 h-4 bg-gray-300 rounded"></div>
-                <div class="flex items-center gap-1">
-                  <div class="w-12 h-3 bg-gray-300 rounded"></div>
-                  <div class="w-6 h-6 bg-gray-300 rounded-full"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Related Appointments Grid -->
-          <div v-else-if="relatedAppointments.length > 0" :class="isMobile ? 'space-y-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
+          <div v-if="relatedAppointments.length > 0" :class="isMobile ? 'space-y-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
             <div
               v-for="appointment in relatedAppointments"
               :key="appointment.id"
@@ -300,6 +282,7 @@ import { HomeOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
 import { useAppointments } from '@/composables/appointment/useAppointments.ts'
 import { useAgents } from '@/composables/agent/useAgents.ts'
 import { useContacts } from '@/composables/contact/useContacts.ts'
+import StatusBadge from '@/shared/components/StatusBadge.vue'
 import type { Appointment } from '@/types/appointment/core.ts'
 import type { AppointmentModalProps, AppointmentModalEmits } from '@/types/appointment/ui.ts'
 import type { CreateAppointmentRequest } from '@/types/appointment/appointment.ts'
@@ -366,15 +349,6 @@ const modalTitle = computed(() => {
   }
 })
 
-const statusColor = computed(() => {
-  if (!currentAppointment.value) return 'default'
-  switch (currentAppointment.value.status) {
-    case 'upcoming': return 'blue'
-    case 'completed': return 'green'
-    case 'cancelled': return 'red'
-    default: return 'default'
-  }
-})
 
 const filteredContacts = computed(() => {
   const query = contactSearchQuery.value.toLowerCase()
@@ -430,8 +404,7 @@ const statusOptions = computed(() => {
   }
 })
 
-// Related appointments loading state - separate from main appointments loading
-const relatedAppointmentsLoading = ref(false)
+// Removed separate loading state - now using single isLoadingData state
 
 // Related appointments for the same contact
 const relatedAppointments = computed(() => {
@@ -630,28 +603,26 @@ const loadAppointmentData = async (): Promise<void> => {
 // Watch for modal visibility and mode changes
 watch([() => props.visible, () => props.mode, () => props.appointmentId, () => props.appointment], async () => {
   if (props.visible) {
-    // Ensure contacts and agents are loaded first
-    await Promise.all([
-      fetchContacts(),
-      fetchAgents()
-    ])
+    isLoadingData.value = true
+    
+    try {
+      // Load all data simultaneously
+      await Promise.all([
+        fetchContacts(),
+        fetchAgents(),
+        fetchAppointments() // Load appointments upfront for related appointments
+      ])
 
-    // Show skeleton for 300ms, then fetch appointments
-    if (props.mode === 'edit') {
-      relatedAppointmentsLoading.value = true
-      setTimeout(() => {
-        relatedAppointmentsLoading.value = false
-      }, 300)
-    }
-
-    // Fetch appointments in background (non-blocking)
-    fetchAppointments()
-
-    if (props.mode === 'create') {
-      resetForm()
-      currentAppointment.value = null
-    } else {
-      await loadAppointmentData()
+      if (props.mode === 'create') {
+        resetForm()
+        currentAppointment.value = null
+      } else {
+        await loadAppointmentData()
+      }
+    } catch (error) {
+      console.error('Failed to load modal data:', error)
+    } finally {
+      isLoadingData.value = false
     }
   }
 }, { immediate: true })
@@ -672,5 +643,25 @@ onMounted(async () => {
 <style scoped>
 .contact-select .ant-select-selection-item {
   font-weight: 500;
+}
+
+/* Fix modal positioning */
+:deep(.ant-modal) {
+  top: 20px !important;
+  max-height: calc(100vh - 40px);
+}
+
+:deep(.ant-modal-body) {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+:deep(.ant-modal-wrap) {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1000 !important;
 }
 </style>
