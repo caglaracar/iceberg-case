@@ -29,9 +29,9 @@
       :appointments="appointments"
       :filters="filters"
       :loading="loading"
-      @view="viewAppointment"
-      @edit="editAppointment"
-      @delete="confirmDelete"
+      @view="(appointment) => viewAppointment(appointment.id)"
+      @edit="(appointment) => editAppointment(appointment.id)"
+      @delete="(appointment) => confirmDelete(appointment.id)"
     />
 
     <!-- Appointment Modal -->
@@ -42,6 +42,8 @@
       :appointment="selectedAppointment"
       @appointment:created="async () => { closeModal(); await fetchAppointments() }"
       @appointment:updated="async () => { closeModal(); await fetchAppointments() }"
+      @edit="(appointment) => editAppointment(appointment.id)"
+      @delete="(appointment) => confirmDelete(appointment.id)"
     />
 
     <!-- Delete Confirmation Modal -->
