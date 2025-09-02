@@ -68,7 +68,7 @@ import SignUpForm from '@/components/login/SignUpForm.vue'
 import ForgotPasswordForm from '@/components/login/ForgotPasswordForm.vue'
 import OTPVerificationForm from '@/components/login/OTPVerificationForm.vue'
 import BrandingSection from '@/components/login/BrandingSection.vue'
-import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import LanguageSwitcher from '@/shared/components/LanguageSwitcher.vue'
 
 const router = useRouter()
 const { login, isLoggedIn } = useAuth()
