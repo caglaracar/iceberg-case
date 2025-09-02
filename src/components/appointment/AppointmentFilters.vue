@@ -39,7 +39,7 @@
         <div class="flex-1 min-w-0">
           <a-select
             v-model:value="localFilters.status"
-            placeholder="All Statuses"
+            :placeholder="t('filters.allStatuses')"
             class="w-full"
             @change="applyFilters"
             allow-clear
@@ -63,7 +63,7 @@
             @change="handleDateRangeChange"
             class="w-full"
             :dropdown-style="{ zIndex: 1050 }"
-            :placeholder="['Start date', 'End date']"
+            :placeholder="[t('filters.startDate'), t('filters.endDate')]"
             :allow-clear="true"
           />
         </div>
@@ -73,7 +73,7 @@
       <div class="w-full">
         <a-input
           v-model:value="localFilters.search"
-          placeholder="Search appointments..."
+          :placeholder="t('appointments.searchAppointments')"
           @keyup.enter="applyFilters"
           @input="applyFilters"
           class="header-style-search w-full"
@@ -141,6 +141,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
+import { useI18n } from '@/composables/useI18n'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { useAgents } from '@/composables/agent/useAgents.ts'
 import type { AppointmentFilters } from '@/types/appointment/core'
@@ -152,6 +153,9 @@ const emit = defineEmits<{
 
 // Use agents composable
 const { agents: availableAgents, fetchAgents } = useAgents()
+
+// i18n
+const { t } = useI18n()
 
 // Internal filters state - self-managed
 const localFilters = ref<AppointmentFilters>({

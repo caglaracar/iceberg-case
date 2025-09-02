@@ -9,7 +9,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <div>
-        <p class="text-gray-600">{{ totalFilteredCount }} Appointments found.</p>
+        <p class="text-gray-600">{{ totalFilteredCount }} {{ t('appointments.title') }} {{ t('table.entries') }}.</p>
       </div>
       <a-button
         type="primary"
@@ -19,7 +19,7 @@
         <template #icon>
           <plus-outlined />
         </template>
-        Create Appointment
+        {{ t('appointments.newAppointment') }}
       </a-button>
     </div>
 
@@ -47,10 +47,10 @@
     <ConfirmationModal
       v-model:visible="showConfirmModal"
       type="warning"
-      title="Delete Appointment"
-      description="Are you sure you want to delete this appointment? This action cannot be undone."
-      confirm-text="Delete"
-      cancel-text="Cancel"
+      :title="t('appointments.deleteAppointment')"
+      :description="t('appointments.confirmDelete')"
+      :confirm-text="t('common.delete')"
+      :cancel-text="t('common.cancel')"
       :loading="isDeleting"
       @confirm="executeDelete"
       @cancel="cancelDelete"
@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from '@/composables/useI18n'
 import { useAppointments } from '@/composables/appointment/useAppointments.ts'
 import { useAgents } from '@/composables/agent/useAgents.ts'
 import { useAppointmentFiltering } from '@/composables/appointment/useAppointmentFiltering.ts'
@@ -74,6 +75,9 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import type { AppointmentFilters as AppointmentFiltersType } from '@/types/appointment/core'
 
 const route = useRoute()
+
+// i18n
+const { t } = useI18n()
 
 // Composables
 const { appointments, loading, fetchAppointments } = useAppointments()

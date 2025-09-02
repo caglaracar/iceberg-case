@@ -44,15 +44,13 @@
           
           <!-- Status & Date -->
           <div class="flex items-center justify-between mb-3">
-            <div :class="getStatusBadgeClass(appointment.status)" class="status-pill">
-              {{ getStatusLabel(appointment.status) }}
-              <span v-if="appointment.status === 'upcoming'" class="countdown-badge">
+            <div :class="getStatusBadgeClass(appointment.status)" class="status-pill-with-date">
+              <span class="status-text">{{ getStatusLabel(appointment.status) }}</span>
+              <span class="date-separator">-</span>
+              <span class="date-text">{{ formatDate(appointment.date) }} {{ formatTime(appointment.date) }}</span>
+              <span v-if="appointment.status === 'upcoming'" class="countdown-badge-inline">
                 {{ getDaysRemaining(appointment.date) }}
               </span>
-            </div>
-            <div class="flex items-center gap-1 text-xs text-gray-500">
-              <clock-circle-outlined />
-              {{ formatDate(appointment.date) }} {{ formatTime(appointment.date) }}
             </div>
           </div>
           
@@ -74,13 +72,13 @@
           
           <!-- Actions -->
           <div class="flex items-center gap-2 justify-end">
-            <a-button type="text" size="small" @click="emit('view', appointment.id)">
+            <a-button type="text" size="small" @click="emit('view', appointment)">
               <eye-outlined />
             </a-button>
-            <a-button type="text" size="small" @click="emit('edit', appointment.id)">
+            <a-button type="text" size="small" @click="emit('edit', appointment)">
               <edit-outlined />
             </a-button>
-            <a-button type="text" size="small" danger @click="emit('delete', appointment.id)">
+            <a-button type="text" size="small" danger @click="emit('delete', appointment)">
               <delete-outlined />
             </a-button>
           </div>
@@ -128,15 +126,13 @@
 
         <template v-else-if="column.key === 'status'">
           <div class="status-row">
-            <div :class="getStatusBadgeClass(record.status)" class="status-pill">
-              {{ getStatusLabel(record.status) }}
-              <span v-if="record.status === 'upcoming'" class="countdown-badge">
+            <div :class="getStatusBadgeClass(record.status)" class="status-pill-with-date">
+              <span class="status-text">{{ getStatusLabel(record.status) }}</span>
+              <span class="date-separator">-</span>
+              <span class="date-text">{{ formatDate(record.date) }} {{ formatTime(record.date) }}</span>
+              <span v-if="record.status === 'upcoming'" class="countdown-badge-inline">
                 {{ getDaysRemaining(record.date) }}
               </span>
-            </div>
-            <div class="time-row">
-              <clock-circle-outlined class="time-icon-small" />
-              {{ formatDate(record.date) }} {{ formatTime(record.date) }}
             </div>
           </div>
         </template>
@@ -217,7 +213,6 @@
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue'
 import { 
-  ClockCircleOutlined,
   EyeOutlined, 
   EditOutlined, 
   DeleteOutlined,
@@ -226,10 +221,11 @@ import {
   PhoneOutlined,
   HomeOutlined
 } from '@ant-design/icons-vue'
+import { useI18n } from '@/composables/useI18n'
 import { useAppointmentFiltering } from '@/composables/appointment/useAppointmentFiltering.ts'
 import { useAgents } from '@/composables/agent/useAgents.ts'
 import type { Appointment, AppointmentFilters, AppointmentStatus } from '@/types/appointment/core'
-import { STATUS_LABELS, AGENT_DISPLAY_LIMIT } from '@/constants/appointment/appointment.ts'
+import { AGENT_DISPLAY_LIMIT } from '@/constants/appointment/appointment.ts'
 
 interface Props {
   appointments: Appointment[]
@@ -242,10 +238,13 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  view: [id: string]
-  edit: [id: string] 
-  delete: [id: string]
+  view: [appointment: Appointment]
+  edit: [appointment: Appointment] 
+  delete: [appointment: Appointment]
 }>()
+
+// i18n
+const { t } = useI18n()
 
 // Internal pagination state
 const currentPage = ref(1)
@@ -284,28 +283,28 @@ const paginationConfig = computed(() => ({
   total: totalFilteredCount.value,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} of ${total} items`
+  showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} ${t('table.of')} ${total} ${t('table.entries')}`
 }))
 
 // Table columns configuration - computed to react to sort changes
 const tableColumns = computed(() => [
-  { title: 'Contact', key: 'contact', dataIndex: 'contact', width: '25%' },
-  { title: 'Address', key: 'address', dataIndex: 'address', width: '25%' },
+  { title: t('appointment.contact'), key: 'contact', dataIndex: 'contact', width: '25%' },
+  { title: t('appointment.address'), key: 'address', dataIndex: 'address', width: '25%' },
   { 
-    title: 'Status & Appointment Time', 
+    title: t('appointment.status') + ' & ' + t('appointment.appointmentTime'), 
     key: 'status', 
     dataIndex: 'status', 
     width: '25%',
     sorter: true,
     sortOrder: sortOrder.value
   },
-  { title: 'Agents', key: 'agent', dataIndex: 'agent', width: '20%' },
-  { title: 'Actions', key: 'actions', width: '5%' }
+  { title: t('appointment.agents'), key: 'agent', dataIndex: 'agent', width: '20%' },
+  { title: t('common.actions'), key: 'actions', width: '5%' }
 ])
 
 // Helper functions
 const getStatusLabel = (status: AppointmentStatus): string => {
-  return STATUS_LABELS[status] || status
+  return t(`status.${status}`) || status
 }
 
 const getAgentInitials = (firstName: string, lastName?: string): string => {
@@ -363,21 +362,21 @@ const getDaysRemaining = (appointmentDate: string): string => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
   if (diffDays === 0) {
-    return 'Today'
+    return t('time.today')
   } else if (diffDays === 1) {
-    return '1 day'
+    return `1 ${t('time.day')}`
   } else if (diffDays <= 30) {
-    return `${diffDays} days`
+    return `${diffDays} ${t('time.days')}`
   } else if (diffDays <= 365) {
     const months = Math.floor(diffDays / 30)
     const remainingDays = diffDays % 30
     if (remainingDays > 0) {
-      return `${months} month${months > 1 ? 's' : ''} ${remainingDays} day${remainingDays > 1 ? 's' : ''}`
+      return `${months} ${t('time.months')} ${remainingDays} ${remainingDays > 1 ? t('time.days') : t('time.day')}`
     }
-    return `${months} month${months > 1 ? 's' : ''}`
+    return `${months} ${t('time.months')}`
   } else {
     const years = Math.floor(diffDays / 365)
-    return `${years} year${years > 1 ? 's' : ''}`
+    return `${years} ${t('time.years')}`
   }
 }
 

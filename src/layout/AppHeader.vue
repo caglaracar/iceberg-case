@@ -16,7 +16,7 @@
     <div class="relative" :class="isMobile ? 'flex-1 mx-4' : 'flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg'">
       <a-input
         v-model:value="searchTerm"
-        :placeholder="isMobile ? 'Search...' : 'Search agents...'"
+        :placeholder="isMobile ? t('common.search') : t('filters.searchAgents')"
         @input="handleSearchInput"
         @focus="isSearchOpen = true"
         @blur="handleSearchBlur"
@@ -33,7 +33,7 @@
         class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border z-50 max-h-64 overflow-y-auto"
       >
         <div v-if="filteredAgents.length === 0" class="px-4 py-3 text-center text-gray-500 text-sm">
-          No agents found
+          {{ t('messages.noAgentsFound') }}
         </div>
         <div v-else>
           <div
@@ -58,15 +58,19 @@
       </div>
     </div>
     
-    <!-- User Menu -->
+    <!-- Language Switcher & User Menu -->
     <div class="flex items-center gap-2 md:gap-4">
+      <!-- Language Switcher -->
+      <LanguageSwitcher :compact="isMobile" />
+      
+      <!-- User Menu -->
       <a-dropdown placement="bottomRight">
         <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors">
           <a-avatar style="background-color: #4f46e5; color: white" size="small">
             AU
           </a-avatar>
           <div v-if="!isMobile" class="text-white">
-            <div class="text-sm font-medium">Admin User</div>
+            <div class="text-sm font-medium">{{ t('auth.adminUser') }}</div>
           </div>
           <down-outlined v-if="!isMobile" class="text-gray-400 text-xs" />
         </div>
@@ -74,7 +78,7 @@
           <a-menu class="dark-menu">
             <a-menu-item @click="logout">
               <logout-outlined />
-              <span class="ml-2">Logout</span>
+              <span class="ml-2">{{ t('navigation.logout') }}</span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -89,6 +93,8 @@ import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useGlobalSearchStore } from '@/stores/globalSearch.ts'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import { useI18n } from '@/composables/useI18n'
 import {
   SearchOutlined,
   UserOutlined,
@@ -99,6 +105,9 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+
+// i18n
+const { t } = useI18n()
 
 // Mobile detection
 const isMobile = computed(() => {

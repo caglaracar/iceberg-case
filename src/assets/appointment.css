@@ -27,6 +27,48 @@
   min-width: 120px;
 }
 
+.status-pill-with-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+.status-text {
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+}
+
+.date-separator {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+.date-text {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.countdown-badge-inline {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 6px;
+  white-space: nowrap;
+  min-width: auto;
+}
+
 .countdown-badge {
   background: linear-gradient(45deg, #ff4757, #ff3838);
   color: white;
@@ -75,10 +117,18 @@
   border: 1px solid #93c5fd;
 }
 
+.badge-upcoming .date-separator {
+  color: rgba(29, 78, 216, 0.6);
+}
+
 .badge-completed {
   background: #dcfce7;
   color: #166534;
   border: 1px solid #86efac;
+}
+
+.badge-completed .date-separator {
+  color: rgba(22, 101, 52, 0.6);
 }
 
 .badge-cancelled {
@@ -87,8 +137,16 @@
   border: 1px solid #f9a8d4;
 }
 
+.badge-cancelled .date-separator {
+  color: rgba(190, 24, 93, 0.6);
+}
+
 .badge-default {
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #d1d5db;
+}
+
+.badge-default .date-separator {
+  color: rgba(55, 65, 81, 0.6);
 }

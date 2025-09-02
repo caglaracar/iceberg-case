@@ -12,10 +12,10 @@
 
     <!-- Main Content -->
     <div class="text-center max-w-md">
-      <h1 class="text-4xl font-bold mb-6">Iceberg CRM</h1>
+      <h1 class="text-4xl font-bold mb-6">{{ t('branding.title') }}</h1>
       
       <p class="text-lg mb-8 text-indigo-100 leading-relaxed">
-        Iceberg is a comprehensive appointment management and customer relationship platform that helps you streamline your business operations, track appointments, manage customer information, and generate detailed reports efficiently.
+        {{ t('branding.description') }}
       </p>
 
       <!-- Stats -->
@@ -27,7 +27,7 @@
           <div class="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full border-2 border-white"></div>
         </div>
         <div class="ml-4 text-left">
-          <p class="text-sm text-indigo-100">More Than <span class="font-bold text-white">2000</span> Businesses Prefer Iceberg</p>
+          <p class="text-sm text-indigo-100">{{ t('branding.businessesPrefer', { count: '2000' }) }}</p>
         </div>
       </div>
     </div>
@@ -40,7 +40,10 @@
 </template>
 
 <script setup>
-// Branding section for login page
+import { useI18n } from '@/composables/useI18n'
+
+// i18n
+const { t } = useI18n()
 </script>
 
 <style scoped>
