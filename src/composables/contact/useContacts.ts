@@ -3,10 +3,18 @@ import api from '@/services/api.ts'
 import type { Contact } from '@/types/contact'
 import type { AirtableContactRecord } from '@/types/contact'
 
+// Global state for contacts - singleton pattern
+const globalContacts: Ref<Contact[]> = ref([])
+const globalLoading: Ref<boolean> = ref(false)
+const globalError: Ref<string | null> = ref(null)
+const contactsCache: Ref<Contact[] | null> = ref(null)
+const lastFetchTime: Ref<number | null> = ref(null)
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
+
 export function useContacts() {
-  const contacts: Ref<Contact[]> = ref([])
-  const loading: Ref<boolean> = ref(false)
-  const error: Ref<string | null> = ref(null)
+  const contacts = globalContacts
+  const loading = globalLoading
+  const error = globalError
 
   const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
 
@@ -28,16 +36,36 @@ export function useContacts() {
     }
   }
 
-  // Fetch all contacts
+  // Fetch all contacts with caching
   const fetchContacts = async (): Promise<Contact[]> => {
+    // Check if we have valid cached data
+    const now = Date.now()
+    if (contactsCache.value && lastFetchTime.value && (now - lastFetchTime.value) < CACHE_DURATION) {
+      contacts.value = contactsCache.value
+      return contactsCache.value
+    }
+    
+    // Prevent multiple simultaneous requests
+    if (loading.value) {
+      // Wait for current request to finish
+      while (loading.value) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      return contacts.value
+    }
+
     loading.value = true
     error.value = null
 
     try {
       const response = await api.get(`/${baseId}/Contacts`)
-      const transformedRecords = response.data.records.map(transformContact)
+      const transformedRecords: Contact[] = response.data.records.map(transformContact)
       
+      // Update global cache
       contacts.value = transformedRecords
+      contactsCache.value = transformedRecords
+      lastFetchTime.value = now
+      
       return transformedRecords
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch contacts'
@@ -63,12 +91,40 @@ export function useContacts() {
   }
 
 
+  // Contact lookup utilities
+  const contactMap = computed(() => {
+    const map = new Map<string, Contact>()
+    contacts.value.forEach(contact => {
+      map.set(contact.id, contact)
+    })
+    return map
+  })
+
+  const getContactById = (id: string): Contact | undefined => {
+    return contactMap.value.get(id)
+  }
+
+  const getContactName = (id: string): string => {
+    const contact = getContactById(id)
+    return contact?.fullName || 'Unknown Contact'
+  }
+
+  const getContactEmail = (id: string): string => {
+    const contact = getContactById(id)
+    return contact?.email || ''
+  }
+
   return {
     contacts,
     loading,
     error,
     fetchContacts,
     searchContacts,
-    totalContacts: computed(() => contacts.value.length)
+    totalContacts: computed(() => contacts.value.length),
+    // Lookup utilities
+    contactMap,
+    getContactById,
+    getContactName,
+    getContactEmail
   }
 }
