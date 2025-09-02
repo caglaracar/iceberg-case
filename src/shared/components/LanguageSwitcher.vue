@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons-vue'
-import { useI18nStore, type SupportedLocale } from '@/stores/i18n'
+import { useI18nStore, type SupportedLocale } from '@/stores/i18n.ts'
 
 interface Props {
   compact?: boolean

@@ -94,7 +94,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useGlobalSearchStore } from '@/stores/globalSearch.ts'
 import { useAuth } from '@/composables/useAuth'
-import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import LanguageSwitcher from '@/shared/components/LanguageSwitcher.vue'
 import { useI18n } from '@/composables/useI18n'
 import {
   SearchOutlined,
