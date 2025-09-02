@@ -46,6 +46,7 @@
     "noAccount": "Hesabınız yok mu?",
     "signUpNow": "Hemen Kaydolun",
     "signUp": "Kaydol",
+    "signIn": "Giriş Yap",
     "enterVerificationCode": "Doğrulama Kodunu Girin",
     "verificationCodeSent": "6 haneli doğrulama kodu gönderildi:",
     "verificationCode": "Doğrulama Kodu",
@@ -59,6 +60,9 @@
     "resendCode": "Kodu Tekrar Gönder",
     "enterAll6Digits": "Lütfen 6 haneli kodu tamamen girin",
     "backToSignIn": "Girişe Dön",
+    "resetPassword": "Şifreyi Sıfırla",
+    "enterEmailReset": "E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.",
+    "sendResetLink": "Sıfırlama Bağlantısı Gönder",
     "createAccountDesc": "Platformumuzu kullanmaya başlamak için hesabınızı oluşturun.",
     "firstName": "Ad",
     "lastName": "Soyad",
@@ -72,7 +76,8 @@
     "alreadyHaveAccount": "Zaten hesabınız var mı?",
     "demoCredentials": "Demo Giriş Bilgileri",
     "email": "E-posta",
-    "useDemoLogin": "Demo Girişi Kullan"
+    "useDemoLogin": "Demo Girişi Kullan",
+    "demoLoginInfo": "Demo erişim için admin@iceberg.com / admin123 kullanın"
   },
   "appointments": {
     "title": "Randevular",

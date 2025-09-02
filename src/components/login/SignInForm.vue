@@ -61,8 +61,8 @@
       <span class="text-gray-500">{{ t('auth.or') }}</span>
     </div>
 
-    <div class="mt-6 text-center">
-      <span class="text-gray-600">{{ t('auth.noAccount') }} </span>
+    <div class="mt-6 text-center space-x-1">
+      <span class="text-gray-600">{{ t('auth.noAccount') }}</span>
       <a 
         href="#" 
         @click.prevent="$emit('switch-to-signup')"
@@ -71,6 +71,9 @@
         {{ t('auth.signUpNow') }}
       </a>
     </div>
+
+    <!-- Demo Credentials -->
+    <DemoCredentials @use-demo="handleDemoLogin" />
 
     <!-- Error Message -->
     <a-alert
@@ -87,6 +90,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from '@/composables/useI18n'
+import DemoCredentials from './DemoCredentials.vue'
 
 // i18n
 const { t } = useI18n()
@@ -131,6 +135,18 @@ const handleSignIn = () => {
     return
   }
 
+  emit('sign-in', form.value)
+}
+
+// Handle demo login
+const handleDemoLogin = () => {
+  form.value.email = 'admin@iceberg.com'
+  form.value.password = 'admin123'
+  form.value.keepSignedIn = false
+  errors.value = {}
+  errorMessage.value = ''
+  
+  // Auto submit demo login
   emit('sign-in', form.value)
 }
 

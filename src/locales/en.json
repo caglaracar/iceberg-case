@@ -54,6 +54,11 @@
     "enterAll6Digits": "Please enter all 6 digits",
     "signUpNow": "Sign Up Now",
     "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "backToSignIn": "Back to Sign In",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDesc": "Enter your email address and we'll send you a verification code.",
+    "sendVerificationCode": "Send Verification Code",
     "createAccountDesc": "Create your account to get started with our platform.",
     "firstName": "First Name",
     "lastName": "Last Name",
@@ -65,9 +70,14 @@
     "privacyPolicy": "Privacy Policy",
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account yet?",
     "demoCredentials": "Demo Credentials",
     "email": "Email",
-    "useDemoLogin": "Use Demo Login"
+    "useDemoLogin": "Use Demo Login",
+    "demoLoginInfo": "Use admin@iceberg.com / admin123 for demo access",
+    "resetPassword": "Reset Password",
+    "enterEmailReset": "Enter your email address and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link"
   },
   "appointments": {
     "title": "Appointments",

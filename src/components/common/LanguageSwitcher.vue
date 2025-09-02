@@ -1,9 +1,12 @@
 <template>
   <a-dropdown placement="bottomRight">
-    <div class="flex items-center gap-2 cursor-pointer hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors">
+    <div 
+      class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-colors"
+      :class="switcherClasses"
+    >
       <span class="text-lg">{{ currentFlag }}</span>
-      <span v-if="!props.compact" class="text-white text-sm">{{ currentName }}</span>
-      <down-outlined v-if="!props.compact" class="text-gray-400 text-xs" />
+      <span v-if="!props.compact" :class="textClasses">{{ currentName }}</span>
+      <down-outlined v-if="!props.compact" :class="iconClasses" />
     </div>
     <template #overlay>
       <a-menu>
@@ -31,10 +34,12 @@ import { useI18nStore, type SupportedLocale } from '@/stores/i18n'
 
 interface Props {
   compact?: boolean
+  variant?: 'dark' | 'light' | 'transparent'
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  compact: false
+  compact: false,
+  variant: 'dark'
 })
 
 const i18nStore = useI18nStore()
@@ -49,6 +54,40 @@ const currentLocaleInfo = computed(() => {
 
 const currentFlag = computed(() => currentLocaleInfo.value?.flag || '🇺🇸')
 const currentName = computed(() => currentLocaleInfo.value?.name || 'English')
+
+// Dynamic classes based on variant
+const switcherClasses = computed(() => {
+  switch (props.variant) {
+    case 'light':
+      return 'hover:bg-gray-100 bg-white/80 backdrop-blur-sm border border-gray-200'
+    case 'transparent':
+      return 'hover:bg-white/10 bg-white/5 backdrop-blur-sm border border-white/20'
+    default: // dark
+      return 'hover:bg-slate-700'
+  }
+})
+
+const textClasses = computed(() => {
+  switch (props.variant) {
+    case 'light':
+      return 'text-gray-800 text-sm'
+    case 'transparent':
+      return 'text-white text-sm'
+    default: // dark
+      return 'text-white text-sm'
+  }
+})
+
+const iconClasses = computed(() => {
+  switch (props.variant) {
+    case 'light':
+      return 'text-gray-500 text-xs'
+    case 'transparent':
+      return 'text-white/70 text-xs'
+    default: // dark
+      return 'text-gray-400 text-xs'
+  }
+})
 
 // Handle locale change
 const handleLocaleChange = (localeCode: SupportedLocale) => {

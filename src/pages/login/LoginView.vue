@@ -5,7 +5,7 @@
       <div class="w-full max-w-md">
         <!-- Language Switcher -->
         <div class="mb-8">
-          <LanguageSwitcher />
+          <LanguageSwitcher variant="light" />
         </div>
 
         <!-- Dynamic Form Content -->
