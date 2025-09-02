@@ -1,7 +1,6 @@
 <template>
   <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-    <div class="flex items-center gap-2 mb-3">
-      <span class="text-blue-600 text-lg">🚀</span>
+    <div class="flex items-center">
       <h3 class="text-sm font-semibold text-blue-800">{{ t('auth.demoCredentials') }}</h3>
     </div>
     <div class="text-xs text-blue-700 space-y-1 mb-3">

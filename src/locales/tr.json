@@ -106,6 +106,7 @@
     "address": "Adres",
     "appointmentTime": "Randevu Saati",
     "appointmentDate": "Randevu Tarihi",
+    "appointmentDateTime": "Randevu Tarihi ve Saati",
     "status": "Durum",
     "agents": "Temsilciler",
     "assignedAgents": "Atanmış Temsilciler",

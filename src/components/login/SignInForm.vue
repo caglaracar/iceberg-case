@@ -1,6 +1,6 @@
 <template>
   <div class="sign-in-form">
-    <div class="mb-8">
+    <div class="mb-2">
       <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.login') }}</h1>
       <p class="text-gray-600">{{ t('auth.loginDescription') }}</p>
     </div>
@@ -57,11 +57,11 @@
       </a-button>
     </form>
 
-    <div class="mt-6 text-center">
+    <div class="mt-2 text-center">
       <span class="text-gray-500">{{ t('auth.or') }}</span>
     </div>
 
-    <div class="mt-6 text-center space-x-1">
+    <div class="mt-2 text-center space-x-1">
       <span class="text-gray-600">{{ t('auth.noAccount') }}</span>
       <a 
         href="#" 

@@ -93,6 +93,7 @@ import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useGlobalSearchStore } from '@/stores/globalSearch.ts'
+import { useAuth } from '@/composables/useAuth'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import { useI18n } from '@/composables/useI18n'
 import {
@@ -105,6 +106,9 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+
+// Authentication
+const { logout: authLogout, user } = useAuth()
 
 // i18n
 const { t } = useI18n()
@@ -159,8 +163,8 @@ const toggleSidebar = () => {
   }
 }
 
-const logout = () => {
-  router.push('/login')
+const logout = async () => {
+  await authLogout()
 }
 
 onMounted(() => {
