@@ -98,13 +98,6 @@
         </template>
         <span>{{ t('navigation.appointments') }}</span>
       </a-menu-item>
-      
-      <a-menu-item key="not-found" @click="navigateTo('/not-found')" class="menu-item">
-        <template #icon>
-          <team-outlined />
-        </template>
-        <span>{{ t('navigation.notFound') }}</span>
-      </a-menu-item>
     </a-menu>
   </a-layout-sider>
 </template>
