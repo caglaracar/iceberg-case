@@ -3,6 +3,7 @@
 A modern, comprehensive appointment management system built with Vue 3, featuring advanced authentication, internationalization, and a beautiful user interface.
 
 ## 📋 Project Overview
+Proejct Link : https://icebergcase.netlify.app/home
 
 Iceberg is a full-featured CRM and appointment management platform designed for businesses to efficiently manage appointments, contacts, and agents. The system includes JWT authentication, multi-language support, responsive design, and seamless API integration with Airtable.
 
@@ -259,11 +260,7 @@ npm run build
 3. Make your changes with proper TypeScript types
 4. Add/update tests if applicable
 5. Submit a pull request
+6. Netlify : https://icebergcase.netlify.app/home
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
 
 **Built with ❤️ using Vue 3, TypeScript, and modern web technologies.**
