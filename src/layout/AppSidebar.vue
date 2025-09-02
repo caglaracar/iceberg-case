@@ -89,21 +89,21 @@
         <template #icon>
           <home-outlined />
         </template>
-        <span>Dashboard</span>
+        <span>{{ t('navigation.dashboard') }}</span>
       </a-menu-item>
       
       <a-menu-item key="appointments" @click="navigateTo('/appointments')" class="menu-item">
         <template #icon>
           <calendar-outlined />
         </template>
-        <span>Appointments</span>
+        <span>{{ t('navigation.appointments') }}</span>
       </a-menu-item>
       
       <a-menu-item key="not-found" @click="navigateTo('/not-found')" class="menu-item">
         <template #icon>
           <team-outlined />
         </template>
-        <span>Not Found</span>
+        <span>{{ t('navigation.notFound') }}</span>
       </a-menu-item>
     </a-menu>
   </a-layout-sider>
@@ -112,6 +112,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from '@/composables/useI18n'
 import {
   CalendarOutlined,
   UserOutlined,
@@ -122,6 +123,9 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+
+// i18n
+const { t } = useI18n()
 
 const collapsed = ref(false)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)

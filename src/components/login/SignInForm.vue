@@ -1,17 +1,17 @@
 <template>
   <div class="sign-in-form">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Sign In</h1>
-      <p class="text-gray-600">You can sign in with your registered e-mail and password.</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.login') }}</h1>
+      <p class="text-gray-600">{{ t('auth.loginDescription') }}</p>
     </div>
 
     <form @submit.prevent="handleSignIn" class="space-y-6">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.emailAddress') }}</label>
         <a-input
           v-model:value="form.email"
           type="email"
-          placeholder="Email Address"
+          :placeholder="t('auth.emailAddress')"
           size="large"
           :status="errors.email ? 'error' : ''"
           class="rounded-lg"
@@ -20,10 +20,10 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.password') }}</label>
         <a-input-password
           v-model:value="form.password"
-          placeholder="Password"
+          :placeholder="t('auth.password')"
           size="large"
           :status="errors.password ? 'error' : ''"
           class="rounded-lg"
@@ -33,14 +33,14 @@
 
       <div class="flex items-center justify-between">
         <a-checkbox v-model:checked="form.keepSignedIn" class="text-sm">
-          Keep Me Signed In
+          {{ t('auth.keepSignedIn') }}
         </a-checkbox>
         <a 
           href="#" 
           @click.prevent="$emit('forgot-password')"
           class="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
         >
-          Forgot Password?
+          {{ t('auth.forgotPassword') }}
         </a>
       </div>
 
@@ -53,22 +53,22 @@
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
         @click="handleSignIn"
       >
-        Sign In
+        {{ t('auth.login') }}
       </a-button>
     </form>
 
     <div class="mt-6 text-center">
-      <span class="text-gray-500">or</span>
+      <span class="text-gray-500">{{ t('auth.or') }}</span>
     </div>
 
     <div class="mt-6 text-center">
-      <span class="text-gray-600">Don't have an account? </span>
+      <span class="text-gray-600">{{ t('auth.noAccount') }} </span>
       <a 
         href="#" 
         @click.prevent="$emit('switch-to-signup')"
         class="text-indigo-600 hover:text-indigo-500 font-medium"
       >
-        Sign Up Now
+        {{ t('auth.signUpNow') }}
       </a>
     </div>
 
@@ -86,6 +86,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from '@/composables/useI18n'
+
+// i18n
+const { t } = useI18n()
 
 const props = defineProps({
   isLoading: {
@@ -109,13 +113,13 @@ const validateForm = () => {
   const newErrors = {}
 
   if (!form.value.email) {
-    newErrors.email = 'Email is required'
+    newErrors.email = t('validation.emailRequired')
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    newErrors.email = 'Please enter a valid email address'
+    newErrors.email = t('validation.invalidEmail')
   }
 
   if (!form.value.password) {
-    newErrors.password = 'Password is required'
+    newErrors.password = t('validation.passwordRequired')
   }
 
   errors.value = newErrors

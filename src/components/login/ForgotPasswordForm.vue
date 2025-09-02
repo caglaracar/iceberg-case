@@ -1,17 +1,17 @@
 <template>
   <div class="forgot-password-form">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Forgot Password</h1>
-      <p class="text-gray-600">Enter your email address and we'll send you a verification code.</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.forgotPasswordTitle') }}</h1>
+      <p class="text-gray-600">{{ t('auth.forgotPasswordDesc') }}</p>
     </div>
 
     <form @submit.prevent="handleForgotPassword" class="space-y-6">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.emailAddress') }}</label>
         <a-input
           v-model:value="form.email"
           type="email"
-          placeholder="Enter your email address"
+          :placeholder="t('auth.emailAddress')"
           size="large"
           :status="errors.email ? 'error' : ''"
           class="rounded-lg"
@@ -28,7 +28,7 @@
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
         @click="handleForgotPassword"
       >
-        Send Verification Code
+        {{ t('auth.sendVerificationCode') }}
       </a-button>
     </form>
 
@@ -38,7 +38,7 @@
         @click.prevent="$emit('back-to-signin')"
         class="text-indigo-600 hover:text-indigo-500 font-medium"
       >
-        ← Back to Sign In
+        ← {{ t('auth.backToSignIn') }}
       </a>
     </div>
 
@@ -66,6 +66,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from '@/composables/useI18n'
+
+// i18n
+const { t } = useI18n()
 
 const props = defineProps({
   isLoading: {
@@ -89,9 +93,9 @@ const validateForm = () => {
   const newErrors = {}
 
   if (!form.value.email) {
-    newErrors.email = 'Email is required'
+    newErrors.email = t('validation.emailRequired')
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    newErrors.email = 'Please enter a valid email address'
+    newErrors.email = t('validation.invalidEmail')
   }
 
   errors.value = newErrors

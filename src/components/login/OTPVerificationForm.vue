@@ -1,13 +1,13 @@
 <template>
   <div class="otp-verification-form">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Enter Verification Code</h1>
-      <p class="text-gray-600">We've sent a 6-digit verification code to <strong>{{ email }}</strong></p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.enterVerificationCode') }}</h1>
+      <p class="text-gray-600">{{ t('auth.verificationCodeSent') }} <strong>{{ email }}</strong></p>
     </div>
 
     <form @submit.prevent="handleOTPVerification" class="space-y-6">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-4">Verification Code</label>
+        <label class="block text-sm font-medium text-gray-700 mb-4">{{ t('auth.verificationCode') }}</label>
         <div class="flex gap-3 justify-center">
           <a-input
             v-for="(digit, index) in otpDigits"
@@ -26,14 +26,14 @@
       </div>
 
       <div class="text-center">
-        <p class="text-gray-600 mb-2">Didn't receive the code?</p>
+        <p class="text-gray-600 mb-2">{{ t('auth.didntReceiveCode') }}</p>
         <a-button 
           type="link" 
           @click="handleResendCode"
           :disabled="countdown > 0"
           class="text-indigo-600 hover:text-indigo-500 font-medium p-0"
         >
-          {{ countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code' }}
+          {{ countdown > 0 ? `${t('auth.resendIn')} ${countdown}s` : t('auth.resendCode') }}
         </a-button>
       </div>
 
@@ -46,7 +46,7 @@
         class="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 rounded-lg font-medium h-12"
         @click="handleOTPVerification"
       >
-        Verify Code
+        {{ t('auth.verifyCode') }}
       </a-button>
     </form>
 
@@ -56,7 +56,7 @@
         @click.prevent="$emit('back-to-forgot-password')"
         class="text-indigo-600 hover:text-indigo-500 font-medium"
       >
-        ← Back to Email Entry
+        ← {{ t('auth.backToEmailEntry') }}
       </a>
     </div>
 
@@ -74,6 +74,10 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { useI18n } from '@/composables/useI18n'
+
+// i18n
+const { t } = useI18n()
 
 const props = defineProps({
   email: {
@@ -141,7 +145,7 @@ const validateOTP = () => {
   const newErrors = {}
 
   if (otp.length !== 6) {
-    newErrors.otp = 'Please enter all 6 digits'
+    newErrors.otp = t('auth.enterAll6Digits')
   }
 
   errors.value = newErrors

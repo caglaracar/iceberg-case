@@ -18,48 +18,48 @@
       <div v-else class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.contact') }}</label>
             <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.contact }}</div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.contactEmail') }}</label>
             <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.contactEmail }}</div>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.contactPhone') }}</label>
             <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.contactPhone }}</div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.status') }}</label>
             <a-badge :color="statusColor" :text="currentAppointment?.status" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.address') }}</label>
           <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.address }}</div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.appointmentDate') }}</label>
             <div class="p-2 bg-gray-50 rounded">{{ formatDate(currentAppointment?.date) }}</div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Time</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.appointmentTime') }}</label>
             <div class="p-2 bg-gray-50 rounded">{{ currentAppointment?.time || 'N/A' }}</div>
           </div>
         </div>
         <div v-if="currentAppointment?.agentNames?.length">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Agents</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('appointment.agents') }}</label>
           <div class="flex flex-wrap gap-2">
-            <a-tag 
+            <a-tag
               v-for="(agentName, index) in currentAppointment.agentNames"
               :key="index"
               :color="getAgentColor(currentAppointment.agentIds?.[index] || '')"
               class="flex items-center gap-1"
             >
-              <a-avatar 
+              <a-avatar
                 :style="{ backgroundColor: getAgentColor(currentAppointment.agentIds?.[index] || '') }"
                 size="small"
               >
@@ -69,13 +69,13 @@
             </a-tag>
           </div>
         </div>
-        
+
         <!-- Related Appointments -->
         <div v-if="relatedAppointments.length > 0">
-          <label class="block text-sm font-medium text-gray-700 mb-3">Related Appointments:</label>
+          <label class="block text-sm font-medium text-gray-700 mb-3">{{ t('appointment.relatedAppointments') }}</label>
           <div class="space-y-2">
-            <div 
-              v-for="appointment in relatedAppointments" 
+            <div
+              v-for="appointment in relatedAppointments"
               :key="appointment.id"
               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
             >
@@ -86,16 +86,16 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <a-badge 
-                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'" 
-                  :text="appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)" 
+                <a-badge
+                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'"
+                  :text="t(`status.${appointment.status}`)"
                 />
                 <div class="flex items-center gap-1 text-xs text-gray-500">
                   <ClockCircleOutlined />
                   {{ formatDate(appointment.date) }}
                 </div>
                 <div v-if="appointment.agentNames?.[0]" class="flex items-center gap-1">
-                  <a-avatar 
+                  <a-avatar
                     :style="{ backgroundColor: getAgentColor(appointment.agentIds?.[0] || '') }"
                     size="small"
                   >
@@ -116,10 +116,10 @@
       </div>
       <a-form v-else :model="formData" layout="vertical">
         <!-- Contact Selection -->
-        <a-form-item label="Contact" :validate-status="errors.contactId ? 'error' : ''" :help="errors.contactId" class="mb-3">
+        <a-form-item :label="t('appointment.contact')" :validate-status="errors.contactId ? 'error' : ''" :help="errors.contactId" class="mb-3">
           <a-select
             v-model:value="formData.contactId"
-            placeholder="Select a contact"
+            :placeholder="t('appointment.selectContact')"
             show-search
             :filter-option="false"
             :options="filteredContacts"
@@ -138,32 +138,32 @@
         </a-form-item>
 
         <!-- Address -->
-        <a-form-item label="Address" class="mb-3">
-          <a-input v-model:value="formData.address" placeholder="Enter address" />
+        <a-form-item :label="t('appointment.address')" class="mb-3">
+          <a-input v-model:value="formData.address" :placeholder="t('appointment.enterAddress')" />
         </a-form-item>
 
         <!-- Appointment Date -->
-        <a-form-item label="Appointment Date" class="mb-3">
+        <a-form-item :label="t('appointment.appointmentDate')" class="mb-3">
           <a-date-picker
             v-model:value="formData.date"
-            placeholder="Select date"
+            :placeholder="t('appointment.selectDate')"
             format="DD/MM/YYYY"
             style="width: 100%"
           />
         </a-form-item>
 
         <!-- Appointment Time -->
-        <a-form-item label="Appointment Time" class="mb-3">
+        <a-form-item :label="t('appointment.appointmentTime')" class="mb-3">
           <a-time-picker
             v-model:value="formData.time"
-            placeholder="Select time"
+            :placeholder="t('appointment.selectTime')"
             format="HH:mm"
             style="width: 100%"
           />
         </a-form-item>
 
         <!-- Status (only for edit mode) -->
-        <a-form-item v-if="mode === 'edit'" label="Status" class="mb-3">
+        <a-form-item v-if="mode === 'edit'" :label="t('appointment.status')" class="mb-3">
           <a-select
             v-model:value="formData.status"
             placeholder="Select status"
@@ -173,11 +173,11 @@
         </a-form-item>
 
         <!-- Agent Selection -->
-        <a-form-item label="Agents" class="mb-3">
+        <a-form-item :label="t('appointment.agents')" class="mb-3">
           <a-select
             v-model:value="formData.agentId"
             mode="multiple"
-            placeholder="Select agents"
+            :placeholder="t('appointment.selectAgents')"
             show-search
             :filter-option="false"
             :options="agentOptions"
@@ -188,8 +188,8 @@
           >
             <template #option="{ label, value }">
               <div class="flex items-center space-x-2">
-                <a-avatar 
-                  :style="{ backgroundColor: getAgentColor(value) }" 
+                <a-avatar
+                  :style="{ backgroundColor: getAgentColor(value) }"
                   size="small"
                 >
                   {{ getAgentInitials(label) }}
@@ -198,9 +198,9 @@
               </div>
             </template>
             <template #tagRender="{ label, value, closable, onClose }">
-              <a-tag 
-                :closable="closable" 
-                :style="{ 
+              <a-tag
+                :closable="closable"
+                :style="{
                   backgroundColor: getAgentColor(value),
                   color: 'white',
                   border: 'none'
@@ -215,8 +215,8 @@
 
         <!-- Related Appointments in Edit Mode -->
         <div v-if="mode === 'edit'">
-          <label class="block text-sm font-medium text-gray-700 mb-3">Related Appointments:</label>
-          
+          <label class="block text-sm font-medium text-gray-700 mb-3">{{ t('appointment.relatedAppointments') }}</label>
+
           <!-- Loading State -->
           <div v-if="relatedAppointmentsLoading" :class="isMobile ? 'grid grid-cols-1 gap-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
             <div v-for="i in 3" :key="i" class="p-3 bg-gray-50 rounded-lg border animate-pulse">
@@ -233,11 +233,11 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Related Appointments Grid -->
           <div v-else-if="relatedAppointments.length > 0" :class="isMobile ? 'space-y-3 mb-4' : 'grid grid-cols-3 gap-3 mb-4'">
-            <div 
-              v-for="appointment in relatedAppointments" 
+            <div
+              v-for="appointment in relatedAppointments"
               :key="appointment.id"
               class="p-3 bg-gray-50 rounded-lg border"
             >
@@ -246,16 +246,16 @@
                 <span class="text-sm text-gray-700 truncate">{{ appointment.address }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <a-badge 
-                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'" 
-                  :text="appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)" 
+                <a-badge
+                  :color="appointment.status === 'completed' ? 'green' : appointment.status === 'cancelled' ? 'red' : 'blue'"
+                  :text="t(`status.${appointment.status}`)"
                 />
                 <div class="flex items-center gap-1">
                   <div class="text-xs text-gray-500">
                     {{ formatDate(appointment.date) }}
                   </div>
                   <div v-if="appointment.agentNames?.[0]">
-                    <a-avatar 
+                    <a-avatar
                       :style="{ backgroundColor: getAgentColor(appointment.agentIds?.[0] || '') }"
                       size="small"
                     >
@@ -266,10 +266,10 @@
               </div>
             </div>
           </div>
-          
+
           <!-- No Related Appointments -->
           <div v-else class="p-3 bg-gray-50 rounded-lg border text-center text-gray-500 text-sm mb-4">
-            No related appointments found for this contact.
+            {{ t('appointment.noRelatedAppointments') }}
           </div>
         </div>
       </a-form>
@@ -278,13 +278,13 @@
     <!-- Footer for Create/Edit -->
     <template v-if="mode !== 'detail'" #footer>
       <div class="flex justify-end space-x-2">
-        <a-button @click="closeModal">Cancel</a-button>
-        <a-button 
-          type="primary" 
+        <a-button @click="closeModal">{{ t('common.cancel') }}</a-button>
+        <a-button
+          type="primary"
           :loading="isSubmitting"
           @click="handleSubmit"
         >
-          {{ mode === 'create' ? 'Create' : 'Update' }} Appointment
+          {{ mode === 'create' ? t('appointment.createAppointment') : t('appointment.updateAppointment') }}
         </a-button>
       </div>
     </template>
@@ -295,6 +295,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { notification } from 'ant-design-vue'
+import { useI18n } from '@/composables/useI18n'
 import { HomeOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
 import { useAppointments } from '@/composables/appointment/useAppointments.ts'
 import { useAgents } from '@/composables/agent/useAgents.ts'
@@ -316,6 +317,9 @@ const props = withDefaults(defineProps<AppointmentModalProps>(), {
 })
 
 const emit = defineEmits<AppointmentModalEmits>()
+
+// i18n
+const { t } = useI18n()
 
 // Use composables for API integration
 const { createAppointment, getAppointmentById, updateAppointment, appointments, fetchAppointments } = useAppointments()
@@ -355,10 +359,10 @@ const agentSearchQuery = ref('')
 // Computed properties
 const modalTitle = computed(() => {
   switch (props.mode) {
-    case 'create': return 'Create New Appointment'
-    case 'edit': return 'Edit Appointment'
-    case 'detail': return 'Appointment Details'
-    default: return 'Appointment'
+    case 'create': return t('appointments.newAppointment')
+    case 'edit': return t('appointments.editAppointment')
+    case 'detail': return t('appointments.viewAppointment')
+    default: return t('appointments.title')
   }
 })
 
@@ -404,24 +408,24 @@ const agentOptions = computed(() => {
 const statusOptions = computed(() => {
   if (!formData.value.date) {
     return [
-      { label: 'Upcoming', value: 'upcoming' },
-      { label: 'Cancelled', value: 'cancelled' }
+      { label: t('status.upcoming'), value: 'upcoming' },
+      { label: t('status.cancelled'), value: 'cancelled' }
     ]
   }
-  
+
   const appointmentDate = dayjs(formData.value.date)
   const now = dayjs()
   const isPastDate = appointmentDate.isBefore(now, 'day')
-  
+
   if (isPastDate) {
     return [
-      { label: 'Completed', value: 'completed' },
-      { label: 'Cancelled', value: 'cancelled' }
+      { label: t('status.completed'), value: 'completed' },
+      { label: t('status.cancelled'), value: 'cancelled' }
     ]
   } else {
     return [
-      { label: 'Upcoming', value: 'upcoming' },
-      { label: 'Cancelled', value: 'cancelled' }
+      { label: t('status.upcoming'), value: 'upcoming' },
+      { label: t('status.cancelled'), value: 'cancelled' }
     ]
   }
 })
@@ -430,27 +434,27 @@ const statusOptions = computed(() => {
 const relatedAppointmentsLoading = ref(false)
 
 // Related appointments for the same contact
-const relatedAppointments = computed(() => {  
+const relatedAppointments = computed(() => {
   const contactId = formData.value.contactId || currentAppointment.value?.contactId
-  
+
   if (!contactId) {
     return []
   }
-  
+
   // Don't wait for appointmentsLoading - use appointments if available
   if (!appointments.value?.length) {
     return []
   }
-  
+
   const currentId = props.appointmentId || currentAppointment.value?.id
-  
+
   const related = appointments.value
-    .filter(apt => 
-      apt.contactId === contactId && 
+    .filter(apt =>
+      apt.contactId === contactId &&
       apt.id !== currentId
     )
     .slice(0, 5) // Limit to 5 related appointments
-    
+
   return related
 })
 
@@ -520,29 +524,29 @@ const handleSubmit = async (): Promise<void> => {
 
     if (props.mode === 'create') {
       await createAppointment(appointmentData)
-      
+
       notification.success({
-        message: 'Appointment Created',
-        description: 'Your appointment has been successfully created',
+        message: t('appointment.appointmentCreated'),
+        description: t('appointment.appointmentCreatedDesc'),
         duration: 3
       })
-      
+
       emit('appointment:created', appointmentData)
     } else if (props.mode === 'edit' && props.appointmentId) {
       await updateAppointment(props.appointmentId, appointmentData)
-      
+
       notification.success({
-        message: 'Appointment Updated',
-        description: 'Your appointment has been successfully updated',
+        message: t('appointment.appointmentUpdated'),
+        description: t('appointment.appointmentUpdatedDesc'),
         duration: 3
       })
-      
+
       emit('appointment:updated', appointmentData)
     }
-    
+
     closeModal()
     resetForm()
-    
+
   } catch (error) {
     // Error handled by notification below
     notification.error({
@@ -573,54 +577,65 @@ const closeModal = (): void => {
 
 // Load appointment data for edit/detail modes
 const loadAppointmentData = async (): Promise<void> => {
-  if ((props.mode === 'edit' || props.mode === 'detail') && props.appointmentId) {
+  if (props.mode === 'edit' || props.mode === 'detail') {
     try {
       isLoadingData.value = true
-      // Clear previous data to prevent showing old data
-      currentAppointment.value = null
-      
-      currentAppointment.value = await getAppointmentById(props.appointmentId) as any
-      
-      if (props.mode === 'edit' && currentAppointment.value) {
-        formData.value = {
-          contactId: currentAppointment.value.contactId || null,
-          address: currentAppointment.value.address,
-          date: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
-          time: currentAppointment.value.date ? dayjs(currentAppointment.value.date) : null,
-          agentId: currentAppointment.value.agentIds || [],
-          status: currentAppointment.value.status || 'upcoming'
+
+      // Use provided appointment data first, fallback to fetching by ID
+      if (props.appointment) {
+        currentAppointment.value = props.appointment
+      } else if (props.appointmentId) {
+        currentAppointment.value = await getAppointmentById(props.appointmentId) as any
+      }
+
+      if (currentAppointment.value) {
+        // For edit mode, populate form data
+        if (props.mode === 'edit') {
+          // Parse the appointment date properly
+          const appointmentDateTime = dayjs(currentAppointment.value.date)
+
+          // Find contact by name matching
+          let contactId = null
+          if (currentAppointment.value?.contact && contacts.value.length > 0) {
+            const contact = contacts.value.find(c => {
+              const fullName = `${c.name} ${c.surname || ''}`.trim()
+              const contactName = currentAppointment.value!.contact
+              return fullName === contactName || c.name === contactName
+            })
+            contactId = contact?.id || null
+          }
+
+          formData.value = {
+            contactId: contactId,
+            address: currentAppointment.value.address || '',
+            date: appointmentDateTime.isValid() ? appointmentDateTime : null,
+            time: appointmentDateTime.isValid() ? appointmentDateTime : null,
+            agentId: currentAppointment.value.agentIds || [],
+            status: currentAppointment.value.status || 'upcoming'
+          }
         }
       }
     } catch (error) {
-      // Error handled by notification below
       notification.error({
-        message: 'Failed to Load Appointment',
-        description: 'Could not load appointment details',
+        message: t('appointment.loadError'),
+        description: t('appointment.loadErrorDesc'),
         duration: 4
       })
     } finally {
       isLoadingData.value = false
     }
-  } else if (props.appointment) {
-    // Use provided appointment data
-    currentAppointment.value = props.appointment
-
-    if (props.mode === 'edit' && currentAppointment.value) {
-      formData.value = {
-        contactId: null,
-        address: currentAppointment.value.address,
-        date: dayjs(currentAppointment.value.date),
-        time: dayjs(currentAppointment.value.time, 'HH:mm'),
-        agentId: currentAppointment.value.agentIds || [],
-        status: currentAppointment.value.status || 'upcoming'
-      }
-    }
   }
 }
 
 // Watch for modal visibility and mode changes
-watch([() => props.visible, () => props.mode, () => props.appointmentId], async () => {
+watch([() => props.visible, () => props.mode, () => props.appointmentId, () => props.appointment], async () => {
   if (props.visible) {
+    // Ensure contacts and agents are loaded first
+    await Promise.all([
+      fetchContacts(),
+      fetchAgents()
+    ])
+
     // Show skeleton for 300ms, then fetch appointments
     if (props.mode === 'edit') {
       relatedAppointmentsLoading.value = true
@@ -628,10 +643,10 @@ watch([() => props.visible, () => props.mode, () => props.appointmentId], async 
         relatedAppointmentsLoading.value = false
       }, 300)
     }
-    
+
     // Fetch appointments in background (non-blocking)
     fetchAppointments()
-    
+
     if (props.mode === 'create') {
       resetForm()
       currentAppointment.value = null
@@ -639,7 +654,7 @@ watch([() => props.visible, () => props.mode, () => props.appointmentId], async 
       await loadAppointmentData()
     }
   }
-})
+}, { immediate: true })
 
 // Load initial data
 onMounted(async () => {

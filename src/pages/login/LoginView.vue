@@ -3,12 +3,9 @@
     <!-- Left Side - Forms -->
     <div class="flex-1 flex items-center justify-center bg-gray-50 p-8">
       <div class="w-full max-w-md">
-        <!-- Language Selector -->
+        <!-- Language Switcher -->
         <div class="mb-8">
-          <a-select v-model:value="selectedLanguage" class="w-24">
-            <a-select-option value="en">🇺🇸 English</a-select-option>
-            <a-select-option value="tr">🇹🇷 Türkçe</a-select-option>
-          </a-select>
+          <LanguageSwitcher />
         </div>
 
         <!-- Dynamic Form Content -->
@@ -70,6 +67,7 @@ import SignUpForm from '@/components/login/SignUpForm.vue'
 import ForgotPasswordForm from '@/components/login/ForgotPasswordForm.vue'
 import OTPVerificationForm from '@/components/login/OTPVerificationForm.vue'
 import BrandingSection from '@/components/login/BrandingSection.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 
 const router = useRouter()
 
@@ -82,7 +80,6 @@ const otpFormRef = ref(null)
 // State management
 const currentView = ref('signin') // 'signin', 'signup', 'forgot-password', 'otp'
 const isLoading = ref(false)
-const selectedLanguage = ref('en')
 const forgotPasswordEmail = ref('')
 
 // View switching

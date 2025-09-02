@@ -2,14 +2,14 @@
   <div class="home-content p-6">
     <!-- Welcome Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome to Iceberg CRM</h1>
-      <p class="text-gray-600">Your appointment management dashboard</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('dashboard.welcome') }}</h1>
+      <p class="text-gray-600">{{ t('dashboard.subtitle') }}</p>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8">
       <a-spin size="large" />
-      <p class="mt-4 text-gray-500">Loading dashboard data...</p>
+      <p class="mt-4 text-gray-500">{{ t('dashboard.loadingData') }}</p>
     </div>
 
     <!-- Stats Cards -->
@@ -20,7 +20,7 @@
             <calendar-outlined class="text-blue-600 text-xl" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Today's Appointments</p>
+            <p class="text-sm font-medium text-gray-500">{{ t('dashboard.todaysAppointments') }}</p>
             <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.todayAppointments }}</p>
           </div>
         </div>
@@ -32,7 +32,7 @@
             <user-outlined class="text-green-600 text-xl" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Contacts</p>
+            <p class="text-sm font-medium text-gray-500">{{ t('dashboard.totalContacts') }}</p>
             <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.totalContacts }}</p>
           </div>
         </div>
@@ -44,7 +44,7 @@
             <team-outlined class="text-purple-600 text-xl" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Active Agents</p>
+            <p class="text-sm font-medium text-gray-500">{{ t('dashboard.activeAgents') }}</p>
             <p class="text-2xl font-bold text-gray-900">{{ dashboardStats.activeAgents }}</p>
           </div>
         </div>
@@ -57,15 +57,15 @@
       <div class="bg-white rounded-lg shadow-sm border">
         <div class="p-6 border-b">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Recent Appointments</h2>
+            <h2 class="text-lg font-semibold text-gray-900">{{ t('dashboard.recentAppointments') }}</h2>
             <a-button type="link" @click="$router.push('/appointments')">
-              View All
+              {{ t('dashboard.viewAll') }}
             </a-button>
           </div>
         </div>
         <div class="p-6">
           <div v-if="recentAppointments.length === 0" class="text-center py-4 text-gray-500">
-            No recent appointments
+            {{ t('dashboard.noRecentAppointments') }}
           </div>
           <div v-else class="space-y-4">
             <div v-for="appointment in recentAppointments" :key="appointment.id" class="flex items-center justify-between">
@@ -79,7 +79,7 @@
                 </div>
               </div>
               <a-tag :color="getStatusColor(appointment.status)">
-                {{ appointment.status }}
+                {{ getStatusText(appointment.status) }}
               </a-tag>
             </div>
           </div>
@@ -89,7 +89,7 @@
       <!-- Quick Actions -->
       <div class="bg-white rounded-lg shadow-sm border">
         <div class="p-6 border-b">
-          <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+          <h2 class="text-lg font-semibold text-gray-900">{{ t('quickActions.title') }}</h2>
         </div>
         <div class="p-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,8 +100,8 @@
                   <plus-outlined class="text-indigo-600 text-xl" />
                 </div>
                 <div class="ml-4">
-                  <p class="text-lg font-semibold text-gray-900">New Appointment</p>
-                  <p class="text-sm text-gray-500">Schedule a new contact visit</p>
+                  <p class="text-lg font-semibold text-gray-900">{{ t('quickActions.newAppointment') }}</p>
+                  <p class="text-sm text-gray-500">{{ t('appointments.newAppointment') }}</p>
                 </div>
               </div>
             </div>
@@ -113,8 +113,8 @@
                   <calendar-outlined class="text-blue-600 text-xl" />
                 </div>
                 <div class="ml-4">
-                  <p class="text-lg font-semibold text-gray-900">View Schedule</p>
-                  <p class="text-sm text-gray-500">Browse all appointments</p>
+                  <p class="text-lg font-semibold text-gray-900">{{ t('appointments.viewSchedule') }}</p>
+                  <p class="text-sm text-gray-500">{{ t('quickActions.viewReports') }}</p>
                 </div>
               </div>
             </div>
@@ -137,6 +137,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from '@/composables/useI18n'
 import { useDashboard } from '@/composables/dashboard/useDashboard.ts'
 import AppointmentModal from '@/components/appointment/AppointmentModal.vue'
 import { STATUS_COLORS } from '@/constants/appointment/color.ts'
@@ -149,6 +150,9 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+
+// i18n
+const { t } = useI18n()
 
 // Modal state
 const showAppointmentModal = ref(false)
@@ -185,7 +189,20 @@ const getStatusColor = (status: string): string => {
   return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'default'
 }
 
-// Load data on mount
+// Status text helper with i18n translation mapping
+const getStatusText = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'upcoming': t('status.upcoming'),
+    'completed': t('status.completed'), 
+    'cancelled': t('status.cancelled'),
+    'confirmed': t('status.confirmed'),
+    'pending': t('status.pending'),
+    'in-progress': t('status.inProgress')
+  }
+  return statusMap[status] || status
+}
+
+// Load dashboard data on component mount
 onMounted(async () => {
   await loadDashboardData()
 })

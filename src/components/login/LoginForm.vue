@@ -1,11 +1,11 @@
 <template>
   <form @submit.prevent="handleLogin" class="space-y-4">
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+      <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.username') }}</label>
       <a-input
         v-model:value="form.email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="t('auth.username')"
         size="large"
         :status="errors.email ? 'error' : ''"
       />
@@ -13,10 +13,10 @@
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+      <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.password') }}</label>
       <a-input-password
         v-model:value="form.password"
-        placeholder="Enter your password"
+        :placeholder="t('auth.password')"
         size="large"
         :status="errors.password ? 'error' : ''"
       />
@@ -25,10 +25,10 @@
 
     <div class="flex items-center justify-between mb-4">
       <a-checkbox v-model:checked="form.rememberMe">
-        Remember me
+        {{ t('auth.rememberMe') }}
       </a-checkbox>
       <a href="#" class="text-sm text-pink-600 hover:text-pink-500">
-        Forgot password?
+        {{ t('auth.forgotPassword') }}
       </a>
     </div>
 
@@ -41,12 +41,14 @@
       class="bg-pink-600 hover:bg-pink-700 border-pink-600 hover:border-pink-700"
       @click="handleLogin"
     >
-      Sign In
+      {{ t('auth.login') }}
     </a-button>
   </form>
 </template>
 
 <script setup>
+import { useI18n } from '@/composables/useI18n'
+
 const props = defineProps({
   form: Object,
   errors: Object,
@@ -54,6 +56,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['submit'])
+
+// i18n
+const { t } = useI18n()
 
 const handleLogin = () => {
   emit('submit')
