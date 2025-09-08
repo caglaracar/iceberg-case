@@ -42,6 +42,8 @@
       :appointment="selectedAppointment"
       @appointment:created="async () => { closeModal(); await fetchAppointments() }"
       @appointment:updated="async () => { closeModal(); await fetchAppointments() }"
+      @edit="(appointment) => editAppointment(appointment.id)"
+      @delete="(appointment) => confirmDelete(appointment.id)"
     />
 
     <!-- Delete Confirmation Modal -->

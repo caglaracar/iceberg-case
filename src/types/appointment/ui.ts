@@ -15,4 +15,6 @@ export interface AppointmentModalEmits {
   'update:visible': [visible: boolean]
   'appointment:created': [appointment: any]
   'appointment:updated': [appointment: any]
+  'edit': [appointment: any]
+  'delete': [appointment: any]
 }

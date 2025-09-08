@@ -47,13 +47,6 @@
           </template>
           <span>Appointments</span>
         </a-menu-item>
-        
-        <a-menu-item key="not-found" @click="navigateToMobile('/not-found')" class="menu-item">
-          <template #icon>
-            <team-outlined />
-          </template>
-          <span>Not Found</span>
-        </a-menu-item>
       </a-menu>
     </div>
   </div>
