@@ -29,9 +29,9 @@
       :appointments="appointments"
       :filters="filters"
       :loading="loading"
-      @view="viewAppointment"
-      @edit="editAppointment"
-      @delete="confirmDelete"
+      @view="(appointment) => viewAppointment(appointment.id)"
+      @edit="(appointment) => editAppointment(appointment.id)"
+      @delete="(appointment) => confirmDelete(appointment.id)"
     />
 
     <!-- Appointment Modal -->

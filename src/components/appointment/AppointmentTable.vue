@@ -165,7 +165,7 @@
         <template v-else-if="column.key === 'actions'">
           <div class="flex items-center gap-2">
             <a-tooltip title="View Details">
-              <a-button type="text" size="small" @click="emit('view', record.id)">
+              <a-button type="text" size="small" @click="emit('view', record)">
                 <template #icon>
                   <eye-outlined />
                 </template>
@@ -175,7 +175,7 @@
               <a-button 
                 type="text" 
                 size="small"
-                @click="emit('edit', record.id)">
+                @click="emit('edit', record)">
               
                 <template #icon>
                   <edit-outlined />
@@ -187,7 +187,7 @@
                 type="text" 
                 size="small"
                 danger
-                @click="emit('delete', record.id)"
+                @click="emit('delete', record)"
               >
                 <template #icon>
                   <delete-outlined />
